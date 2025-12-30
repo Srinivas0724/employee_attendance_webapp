@@ -1,6 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%
-  // 1. PASTE THE CACHE CODE HERE (Lines 2-6)
   response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
   response.setHeader("Pragma", "no-cache");
   response.setDateHeader("Expires", 0);
@@ -13,29 +12,39 @@
 
 <style>
 /* GLOBAL STYLES */
-body { margin:0; font-family:"Segoe UI", sans-serif; background:#f4f6f9; display:flex; height:100vh; }
+body { margin:0; font-family:"Segoe UI", sans-serif; background:#f4f6f9; display:flex; height:100vh; color:#333; }
 
-/* SIDEBAR (Standardized) */
+/* SIDEBAR */
 .sidebar { width:260px; background:#343a40; color:#fff; display:flex; flex-direction:column; }
 .sidebar h2 { padding:20px; margin:0; background:#212529; text-align:center; }
 .sidebar a { display:block; padding:15px 20px; color:#c2c7d0; text-decoration:none; border-left: 3px solid transparent; }
 .sidebar a:hover, .sidebar a.active { background:#495057; color:#fff; border-left: 3px solid #007bff; }
+@media (max-width: 768px) { .sidebar { display:none; } }
 
 /* MAIN CONTENT */
-.main { flex:1; display:flex; flex-direction:column; }
+.main { flex:1; display:flex; flex-direction:column; overflow: hidden; }
 .header { height:60px; background:#fff; display:flex; justify-content:space-between; align-items:center; padding:0 20px; border-bottom: 1px solid #dee2e6; }
 .content { padding:30px; overflow-y: auto; }
 
 /* FORM STYLES */
 .card { background:#fff; padding:20px; border-radius:8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; }
 input, select { width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #ced4da; border-radius: 4px; box-sizing: border-box; }
-button { padding: 10px 20px; border: none; background: #28a745; color: white; border-radius: 4px; cursor: pointer; }
+button { padding: 10px 20px; border: none; background: #28a745; color: white; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold; }
 button:hover { background: #218838; }
+button:disabled { background: #ccc; cursor: not-allowed; }
 
 /* TABLE STYLES */
 table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-th, td { text-align: left; padding: 12px; border-bottom: 1px solid #ddd; }
+th, td { text-align: left; padding: 12px; border-bottom: 1px solid #ddd; font-size: 14px; }
 th { background-color: #f8f9fa; }
+
+/* BADGES */
+.badge { padding: 5px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; color: white; display: inline-block; }
+.bg-Pending { background: #f1c40f; color: #333; }
+.bg-Approved { background: #3498db; }
+.bg-Paid { background: #27ae60; }
+.bg-Rejected { background: #e74c3c; }
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -64,13 +73,15 @@ th { background-color: #f8f9fa; }
 
   <div class="content">
     
-    <div class="card">
-        <h3>Add New Expense</h3>
+    <div class="card" style="max-width: 500px; margin: 0 auto;">
+        <h3 style="margin-top:0;">Add New Expense</h3>
+        
         <label>Expense Type</label>
         <select id="expType">
             <option>Travel</option>
             <option>Food</option>
             <option>Equipment</option>
+            <option>Medical</option>
             <option>Other</option>
         </select>
         
@@ -78,9 +89,9 @@ th { background-color: #f8f9fa; }
         <input type="number" id="expAmount" placeholder="0.00">
         
         <label>Description</label>
-        <input type="text" id="expDesc" placeholder="Details...">
-        
-        <button onclick="addExpense()">Submit Claim</button>
+        <input type="text" id="expDesc" placeholder="e.g. Lunch with Client">
+
+        <button onclick="addExpense()" id="submitBtn">Submit Claim</button>
     </div>
 
     <div class="card">
@@ -105,10 +116,10 @@ th { background-color: #f8f9fa; }
 
 <script>
 /* CONFIG */
-const firebaseConfig = {
-  apiKey: "AIzaSyCV5tKJMLOVcXiZUyuJZhLWOOSD96gsmP0",
-  authDomain: "attendencewebapp-4215b.firebaseapp.com",
-  projectId: "attendencewebapp-4215b"
+const firebaseConfig = { 
+    apiKey: "AIzaSyCV5tKJMLOVcXiZUyuJZhLWOOSD96gsmP0", 
+    authDomain: "attendencewebapp-4215b.firebaseapp.com", 
+    projectId: "attendencewebapp-4215b"
 };
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
@@ -121,7 +132,7 @@ auth.onAuthStateChanged(user => {
   loadExpenses(user.email);
 });
 
-/* ADD EXPENSE */
+/* ADD EXPENSE (NO UPLOAD) */
 function addExpense(){
     const user = auth.currentUser;
     const type = document.getElementById("expType").value;
@@ -130,6 +141,12 @@ function addExpense(){
 
     if(!amount){ alert("Enter amount"); return; }
 
+    // UI Loading State
+    const btn = document.getElementById("submitBtn");
+    btn.innerText = "Submitting...";
+    btn.disabled = true;
+
+    // Simple Save to DB
     db.collection("expenses").add({
         email: user.email,
         type: type,
@@ -137,9 +154,13 @@ function addExpense(){
         description: desc,
         status: "Pending",
         date: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(()=>{
-        alert("Expense submitted!");
+    }).then(() => {
+        alert("✅ Expense submitted successfully!");
         location.reload();
+    }).catch(err => {
+        alert("Error: " + err.message);
+        btn.innerText = "Submit Claim";
+        btn.disabled = false;
     });
 }
 
@@ -158,32 +179,20 @@ function loadExpenses(email){
               const d = doc.data();
               const date = d.date ? new Date(d.date.seconds*1000).toLocaleDateString() : "-";
               
-              let statusColor = "orange";
-              if(d.status === "Approved") statusColor = "green";
-              if(d.status === "Rejected") statusColor = "red";
+              let row = "<tr>";
+              row += "<td>" + date + "</td>";
+              row += "<td>" + d.type + "</td>";
+              row += "<td>" + d.description + "</td>";
+              row += "<td>₹" + d.amount + "</td>";
+              row += "<td><span class='badge bg-" + d.status + "'>" + d.status + "</span></td>";
+              row += "</tr>";
 
-              tbody.innerHTML += `
-                <tr>
-                    <td>\${date}</td>
-                    <td>\${d.type}</td>
-                    <td>\${d.description}</td>
-                    <td>₹\${d.amount}</td>
-                    <td style="color:\${statusColor}; font-weight:bold">\${d.status}</td>
-                </tr>
-              `;
+              tbody.innerHTML += row;
           });
       });
 }
 
-/* LOGOUT (Fixes redirection) */
-function logout(){
-    auth.signOut().then(() => {
-        window.location.href = "login.jsp";
-    });
-}
+function logout(){ auth.signOut().then(() => location.href = "login.jsp"); }
 </script>
 </body>
 </html>
-
-
-

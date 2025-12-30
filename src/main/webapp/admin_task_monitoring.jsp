@@ -84,6 +84,7 @@ tr:hover { background: #f8f9fa; }
       <a href="manage_employees.jsp">👥 Manage Employees</a>
       <a href="admin_task_monitoring.jsp" class="active">📝 Task Monitoring</a> <a href="reports.jsp">📅 Attendance Reports</a>
       <a href="payroll.jsp">💰 Payroll Management</a>
+      <a href="admin_expenses.jsp" class="active">💸 Expense Approvals</a>
       <a href="admin_settings.jsp">⚙️ Settings</a>
       <a href="#" onclick="logout()" style="margin-top:auto; background:#1a1d20;">🚪 Logout</a>
     </div>

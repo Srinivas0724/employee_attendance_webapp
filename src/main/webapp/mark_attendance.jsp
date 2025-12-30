@@ -90,6 +90,25 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 let currentUser = null;
+/* AUTH CHECK */
+auth.onAuthStateChanged(user => {
+    if (user) {
+        // --- ADD THIS BLOCK ---
+        db.collection("users").doc(user.email).get().then(doc => {
+            if (!doc.exists) {
+                alert("🚫 Your account has been disabled/deleted by Admin.");
+                auth.signOut().then(() => window.location.replace("login.jsp"));
+            } else {
+                // Account is valid, proceed loading
+                currentUser = user;
+                document.getElementById("userEmail").innerText = user.email;
+            }
+        });
+        // ----------------------
+    } else {
+        window.location.replace("login.jsp");
+    }
+});
 
 auth.onAuthStateChanged(user => {
   if (user) {
