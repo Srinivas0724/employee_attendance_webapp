@@ -1,153 +1,134 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%
+  // FORCE NO CACHE
+  response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  response.setHeader("Pragma", "no-cache");
+  response.setDateHeader("Expires", 0);
+%>
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>AKA Attendance - Login</title>
-
-<style>
-body {
-    font-family: 'Segoe UI', sans-serif;
-    background-color: #e9ecef;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-}
-.login-box {
-    background: white;
-    padding: 40px;
-    border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    width: 320px;
-    text-align: center;
-}
-input {
-    width: 100%;
-    padding: 12px;
-    margin: 10px 0;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
-button {
-    width: 100%;
-    padding: 12px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-}
-button:hover {
-    background-color: #0056b3;
-}
-.error {
-    color: red;
-    margin-top: 10px;
-    font-size: 14px;
-    display: none;
-}
-</style>
-
-<!-- Firebase SDKs -->
+<title>Login - emPower</title>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-</head>
 
+<script type="text/javascript">
+    // 1. THE TRAP: Pushes user forward if they try to go back
+    function preventBack() { window.history.forward(); }
+    setTimeout("preventBack()", 0);
+    window.onunload = function () { null };
+</script>
+<style>
+    body { font-family: "Segoe UI", sans-serif; background: #f4f6f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+    .login-card { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 350px; text-align: center; }
+    input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+    button { width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; transition: 0.3s; }
+    button:hover { background: #0056b3; }
+    .error { color: red; margin-bottom: 15px; font-size: 14px; display: none; background: #ffe6e6; padding: 10px; border-radius: 4px;}
+    
+    /* Loading text for auto-redirect */
+    #loadingStatus { display:none; color: #666; font-size: 14px; margin-bottom: 15px; }
+</style>
+</head>
 <body>
 
-<div class="login-box">
-    <h2>System Login</h2>
-    <input type="email" id="email" placeholder="Email">
-    <input type="password" id="password" placeholder="Password">
-    <button type="button" onclick="handleLogin()">Sign In</button>
-    <div id="error-msg" class="error"></div>
+<div class="login-card">
+    <h2>emPower Login V3</h2>
+    
+    <div id="loadingStatus">⌛ Checking session...</div>
+    <div id="errorMsg" class="error"></div>
+    
+    <div id="loginForm">
+        <input type="email" id="email" placeholder="Enter email" required>
+        <input type="password" id="password" placeholder="Enter password" required>
+        <button onclick="login()">Sign In</button>
+        <br><br>
+        <a href="signup.jsp" style="text-decoration:none; color:#007bff;">Create New Account</a>
+    </div>
 </div>
 
 <script>
-/* 🔥 FIREBASE CONFIG (NO STORAGE) */
-const firebaseConfig = {
-    apiKey: "AIzaSyCV5tKJMLOVcXiZUyuJZhLWOOSD96gsmP0",
-    authDomain: "attendencewebapp-4215b.firebaseapp.com",
-    projectId: "attendencewebapp-4215b"
-};
-
-firebase.initializeApp(firebaseConfig);
-
+// 1. Initialize Firebase
+const firebaseConfig = { apiKey: "AIzaSyCV5tKJMLOVcXiZUyuJZhLWOOSD96gsmP0", authDomain: "attendencewebapp-4215b.firebaseapp.com", projectId: "attendencewebapp-4215b" };
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-/* LOGIN */
-function handleLogin() {
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value.trim();
-    const errorDiv = document.getElementById("error-msg");
+// 2. AUTO-REDIRECT: Check if user is already logged in
+document.getElementById("loadingStatus").style.display = "block";
+document.getElementById("loginForm").style.opacity = "0.5";
 
-    errorDiv.style.display = "none";
+auth.onAuthStateChanged(user => {
+    if (user) {
+        // User is logged in -> Check Role & Redirect
+        checkRoleAndRedirect(user);
+    } else {
+        // User is NOT logged in -> Show Form
+        document.getElementById("loadingStatus").style.display = "none";
+        document.getElementById("loginForm").style.opacity = "1";
+    }
+});
 
-    if (!email || !password) {
-        errorDiv.innerText = "Please enter email and password.";
-        errorDiv.style.display = "block";
+// 3. LOGIN FUNCTION
+function login() {
+    const email = document.getElementById("email").value;
+    const pass = document.getElementById("password").value;
+    const errorBox = document.getElementById("errorMsg");
+    const btn = document.querySelector("button");
+
+    if(!email || !pass) {
+        errorBox.innerText = "Please enter email and password.";
+        errorBox.style.display = "block";
         return;
     }
 
-    auth.signInWithEmailAndPassword(email, password)
-        .then((cred) => {
-            const user = cred.user;
-            loadUserProfile(user);
-        })
-        .catch((error) => {
-            errorDiv.innerText = error.message;
-            errorDiv.style.display = "block";
-        });
+    btn.innerText = "Checking...";
+    btn.disabled = true;
+
+    auth.signInWithEmailAndPassword(email, pass)
+    .then((userCredential) => {
+        // Login Success -> Now Check Role
+        checkRoleAndRedirect(userCredential.user);
+    })
+    .catch((error) => {
+        btn.innerText = "Sign In";
+        btn.disabled = false;
+        errorBox.innerText = "Invalid Login: " + error.message;
+        errorBox.style.display = "block";
+    });
 }
 
-/* LOAD OR AUTO-CREATE USER PROFILE */
-function loadUserProfile(user) {
-    const uid = user.uid;
+// 4. ROLE CHECKER (Separates Admin from Employee)
+function checkRoleAndRedirect(user) {
+    const status = document.getElementById("loadingStatus");
+    status.innerText = "Verifying Role...";
+    status.style.display = "block";
 
-    db.collection("users").doc(uid).get()
-        .then((doc) => {
-
-            // ✅ PROFILE EXISTS
-            if (doc.exists) {
-                const data = doc.data();
-
-                if (data.isActive === false) {
-                    alert("Your account is disabled.");
-                    auth.signOut();
-                    return;
-                }
-
-                if (data.role === "admin") {
-                    window.location.href = "admin_dashboard.jsp";
-                } else {
-                    window.location.href = "mark_attendance.jsp";
-                }
+    db.collection("users").doc(user.email).get()
+    .then((doc) => {
+        if (doc.exists) {
+            const role = doc.data().role;
+            
+            if (role === "admin") {
+                // GO TO ADMIN DASHBOARD
+                window.location.replace("admin_dashboard.jsp");
+            } else {
+                // GO TO EMPLOYEE DASHBOARD
+                window.location.replace("mark_attendance.jsp");
             }
-
-            // 🔥 PROFILE DOES NOT EXIST → AUTO CREATE
-            else {
-                db.collection("users").doc(uid).set({
-                    email: user.email,
-                    role: "employee",     // default role
-                    isActive: true,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                }).then(() => {
-                    window.location.href = "mark_attendance.jsp";
-                });
-            }
-
-        })
-        .catch((error) => {
-            console.error(error);
-            alert("Error loading user profile.");
-        });
+        } else {
+            // Fallback (Default to employee if no role found)
+            window.location.replace("mark_attendance.jsp");
+        }
+    })
+    .catch((error) => {
+        console.error("Role Check Error", error);
+        // If DB fails, fallback to employee page so they aren't stuck
+        window.location.replace("mark_attendance.jsp");
+    });
 }
 </script>
-
 </body>
 </html>
-

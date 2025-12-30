@@ -1,31 +1,41 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%
+  // 1. PASTE THE CACHE CODE HERE (Lines 2-6)
+  response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  response.setHeader("Pragma", "no-cache");
+  response.setDateHeader("Expires", 0);
+%>
 <!DOCTYPE html>
 <html>
 <head>
-<title>Employee Expenses</title>
+<meta charset="UTF-8">
+<title>My Expenses - emPower</title>
 
 <style>
-body { margin:0; font-family:Arial; background:#f4f6f9; display:flex; }
-.sidebar { width:220px; background:#212529; color:#fff; padding:20px; }
-.sidebar a { color:#cfd4da; display:block; padding:10px 0; text-decoration:none; }
-.sidebar a.active, .sidebar a:hover { color:#fff; }
+/* GLOBAL STYLES */
+body { margin:0; font-family:"Segoe UI", sans-serif; background:#f4f6f9; display:flex; height:100vh; }
 
-.main { flex:1; padding:30px; }
-.card { background:#fff; padding:20px; border-radius:6px; margin-bottom:25px; }
+/* SIDEBAR (Standardized) */
+.sidebar { width:260px; background:#343a40; color:#fff; display:flex; flex-direction:column; }
+.sidebar h2 { padding:20px; margin:0; background:#212529; text-align:center; }
+.sidebar a { display:block; padding:15px 20px; color:#c2c7d0; text-decoration:none; border-left: 3px solid transparent; }
+.sidebar a:hover, .sidebar a.active { background:#495057; color:#fff; border-left: 3px solid #007bff; }
 
-table { width:100%; border-collapse:collapse; }
-th { background:#0d6efd; color:#fff; padding:10px; }
-td { padding:10px; border-bottom:1px solid #ddd; }
+/* MAIN CONTENT */
+.main { flex:1; display:flex; flex-direction:column; }
+.header { height:60px; background:#fff; display:flex; justify-content:space-between; align-items:center; padding:0 20px; border-bottom: 1px solid #dee2e6; }
+.content { padding:30px; overflow-y: auto; }
 
-.badge { padding:4px 10px; border-radius:4px; color:#fff; font-size:12px; }
-.badge-SUBMITTED { background:#6c757d; }
-.badge-APPROVED { background:#17a2b8; }
-.badge-REJECTED { background:#dc3545; }
-.badge-PAID { background:#28a745; }
+/* FORM STYLES */
+.card { background:#fff; padding:20px; border-radius:8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; }
+input, select { width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #ced4da; border-radius: 4px; box-sizing: border-box; }
+button { padding: 10px 20px; border: none; background: #28a745; color: white; border-radius: 4px; cursor: pointer; }
+button:hover { background: #218838; }
 
-input { width:100%; padding:6px; }
-button { padding:8px 14px; cursor:pointer; }
-.total { text-align:right; font-weight:bold; }
+/* TABLE STYLES */
+table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+th, td { text-align: left; padding: 12px; border-bottom: 1px solid #ddd; }
+th { background-color: #f8f9fa; }
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -36,151 +46,142 @@ button { padding:8px 14px; cursor:pointer; }
 <body>
 
 <div class="sidebar">
-  <h3>emPower</h3>
-  <a href="#">Attendance</a>
-  <a href="#">Tasks</a>
-  <a class="active" href="#">Expenses</a>
-  <a href="#">Salary</a>
+  <h2>emPower</h2>
+  <a href="mark_attendance.jsp">📍 Mark Attendance</a>
+  <a href="employee_tasks.jsp">📝 Assigned Tasks</a>
+  <a href="attendance_history.jsp">🕒 Attendance History</a>
+  <a href="employee_expenses.jsp" class="active">💸 My Expenses</a>
+  <a href="salary.jsp">💰 My Salary</a>
+  <a href="settings.jsp">⚙️ Settings</a>
+  <a href="#" onclick="logout()">🚪 Logout</a>
 </div>
 
 <div class="main">
+  <div class="header">
+    <b>My Expenses</b>
+    <span id="userEmail">Loading...</span>
+  </div>
 
-<!-- SUBMIT -->
-<div class="card">
-<h3>Submit Expense</h3>
+  <div class="content">
+    
+    <div class="card">
+        <h3>Add New Expense</h3>
+        <label>Expense Type</label>
+        <select id="expType">
+            <option>Travel</option>
+            <option>Food</option>
+            <option>Equipment</option>
+            <option>Other</option>
+        </select>
+        
+        <label>Amount (₹)</label>
+        <input type="number" id="expAmount" placeholder="0.00">
+        
+        <label>Description</label>
+        <input type="text" id="expDesc" placeholder="Details...">
+        
+        <button onclick="addExpense()">Submit Claim</button>
+    </div>
 
-<table>
-<thead>
-<tr>
-  <th>Sl.No</th>
-  <th>Product Name</th>
-  <th>Quantity</th>
-  <th>Cost (₹)</th>
-</tr>
-</thead>
-<tbody id="itemBody"></tbody>
-</table>
-
-<button onclick="addRow()">+ Add Item</button>
-<div class="total">Total: ₹<span id="totalAmt">0</span></div>
-<br>
-<button onclick="submitExpense()">Submit</button>
-</div>
-
-<!-- HISTORY -->
-<div class="card">
-<h3>My Expense History</h3>
-
-<table>
-<thead>
-<tr>
-  <th>Date</th>
-  <th>Amount</th>
-  <th>Status</th>
-</tr>
-</thead>
-<tbody id="historyBody">
-<tr><td colspan="3">Loading...</td></tr>
-</tbody>
-</table>
-</div>
-
+    <div class="card">
+        <h3>My Recent Claims</h3>
+        <table id="expTable">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr><td colspan="5">Loading...</td></tr>
+            </tbody>
+        </table>
+    </div>
+  </div>
 </div>
 
 <script>
-firebase.initializeApp({
+/* CONFIG */
+const firebaseConfig = {
   apiKey: "AIzaSyCV5tKJMLOVcXiZUyuJZhLWOOSD96gsmP0",
   authDomain: "attendencewebapp-4215b.firebaseapp.com",
   projectId: "attendencewebapp-4215b"
-});
-
+};
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-/* AUTH */
+/* AUTH CHECK */
 auth.onAuthStateChanged(user => {
-  if (!user) return alert("Login required");
-  addRow();
-  loadHistory(user.email);
+  if(!user) { location.href="login.jsp"; return; }
+  document.getElementById("userEmail").innerText = user.email;
+  loadExpenses(user.email);
 });
 
-/* ADD ROW */
-function addRow() {
-  const body = document.getElementById("itemBody");
-  const n = body.rows.length + 1;
+/* ADD EXPENSE */
+function addExpense(){
+    const user = auth.currentUser;
+    const type = document.getElementById("expType").value;
+    const amount = document.getElementById("expAmount").value;
+    const desc = document.getElementById("expDesc").value;
 
-  body.insertAdjacentHTML("beforeend",
-    "<tr>" +
-      "<td>" + n + "</td>" +
-      "<td><input class='name'></td>" +
-      "<td><input type='number' class='qty' value='1' oninput='calc()'></td>" +
-      "<td><input type='number' class='cost' oninput='calc()'></td>" +
-    "</tr>"
-  );
+    if(!amount){ alert("Enter amount"); return; }
+
+    db.collection("expenses").add({
+        email: user.email,
+        type: type,
+        amount: parseFloat(amount),
+        description: desc,
+        status: "Pending",
+        date: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(()=>{
+        alert("Expense submitted!");
+        location.reload();
+    });
 }
 
-/* TOTAL */
-function calc() {
-  let total = 0;
-  document.querySelectorAll("#itemBody tr").forEach(r => {
-    total += (+r.querySelector(".qty").value || 0) *
-             (+r.querySelector(".cost").value || 0);
-  });
-  document.getElementById("totalAmt").innerText = total;
-  return total;
-}
+/* LOAD EXPENSES */
+function loadExpenses(email){
+    db.collection("expenses")
+      .where("email", "==", email)
+      .orderBy("date", "desc")
+      .get()
+      .then(snap => {
+          const tbody = document.getElementById("tableBody");
+          tbody.innerHTML = "";
+          if(snap.empty){ tbody.innerHTML = "<tr><td colspan='5'>No records found</td></tr>"; return; }
+          
+          snap.forEach(doc => {
+              const d = doc.data();
+              const date = d.date ? new Date(d.date.seconds*1000).toLocaleDateString() : "-";
+              
+              let statusColor = "orange";
+              if(d.status === "Approved") statusColor = "green";
+              if(d.status === "Rejected") statusColor = "red";
 
-/* SUBMIT */
-function submitExpense() {
-  const user = auth.currentUser;
-  const amount = calc();
-  if (amount <= 0) return alert("Invalid amount");
-
-  db.collection("expenses").add({
-    email: user.email,
-    amount: amount,
-    status: "SUBMITTED",
-    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-  }).then(() => {
-    alert("Submitted");
-    document.getElementById("itemBody").innerHTML = "";
-    document.getElementById("totalAmt").innerText = "0";
-    addRow();
-  });
-}
-
-/* LOAD HISTORY (JSP SAFE) */
-function loadHistory(email) {
-  const body = document.getElementById("historyBody");
-
-  db.collection("expenses")
-    .where("email","==",email)
-    .onSnapshot(snap => {
-
-      body.innerHTML = "";
-
-      if (snap.empty) {
-        body.innerHTML = "<tr><td colspan='3'>No records</td></tr>";
-        return;
-      }
-
-      snap.forEach(doc => {
-        const x = doc.data();
-        const dt = x.timestamp
-          ? new Date(x.timestamp.seconds * 1000).toLocaleDateString()
-          : "-";
-
-        body.innerHTML +=
-          "<tr>" +
-            "<td>" + dt + "</td>" +
-            "<td>₹" + x.amount + "</td>" +
-            "<td><span class='badge badge-" + x.status + "'>" + x.status + "</span></td>" +
-          "</tr>";
+              tbody.innerHTML += `
+                <tr>
+                    <td>\${date}</td>
+                    <td>\${d.type}</td>
+                    <td>\${d.description}</td>
+                    <td>₹\${d.amount}</td>
+                    <td style="color:\${statusColor}; font-weight:bold">\${d.status}</td>
+                </tr>
+              `;
+          });
       });
+}
+
+/* LOGOUT (Fixes redirection) */
+function logout(){
+    auth.signOut().then(() => {
+        window.location.href = "login.jsp";
     });
 }
 </script>
-
 </body>
 </html>
 

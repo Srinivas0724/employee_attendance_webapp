@@ -28,7 +28,7 @@ public class MarkAttendanceServlet extends HttpServlet {
                 FileInputStream serviceAccount = 
                     new FileInputStream("C:/tomcat9/firebase-service-account.json");
 
-                FirebaseOptions options = new FirebaseOptions.Builder()
+                FirebaseOptions options = FirebaseOptions.builder()
                     .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                     .build();
 
