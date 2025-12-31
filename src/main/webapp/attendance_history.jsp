@@ -1,4 +1,9 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%
+  response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  response.setHeader("Pragma", "no-cache");
+  response.setDateHeader("Expires", 0);
+%>
 <!DOCTYPE html>
 <html>
 <head>
@@ -7,7 +12,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-/* 1. FORCE VISIBLE TEXT (Dark Grey) */
+/* GLOBAL STYLES */
 body { margin:0; font-family:"Segoe UI", sans-serif; background:#f4f6f9; display:flex; height:100vh; color: #333; }
 
 /* SIDEBAR */
@@ -53,49 +58,58 @@ th { background:#343a40; color:#fff !important; font-weight:600; }
 <body>
 
 <div class="sidebar">
-  <h2>Dashboard</h2>
+  <h2>emPower</h2>
   <a href="mark_attendance.jsp">📍 Mark Attendance</a>
   <a href="employee_tasks.jsp">📝 Assigned Tasks</a>
-  <a href="attendance_history.jsp">🕒 Attendance History</a>
+  <a href="attendance_history.jsp" class="active">🕒 Attendance History</a>
   <a href="employee_expenses.jsp">💸 My Expenses</a>
-  <a href="salary.jsp" class="active">💰 My Salary</a>
+  <a href="salary.jsp">💰 My Salary</a>
   <a href="settings.jsp">⚙️ Settings</a>
   <a href="#" onclick="logout()">🚪 Logout</a>
 </div>
 
-    <div class="main">
-        <div class="header">
-            <h3>My History</h3>
-            <span id="userEmail">Loading...</span>
-        </div>
-
-        <div class="content">
-            <div id="loading">⌛ Loading records...</div>
-            <table id="historyTable" style="display:none;">
-                <thead>
-                    <tr>
-                        <th>Date & Time</th>
-                        <th>Type</th>
-                        <th>Project</th>
-                        <th>Location</th>
-                        <th>Photo</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody"></tbody>
-            </table>
-        </div>
+<div class="main">
+    <div class="header">
+        <h3>My History</h3>
+        <span id="userEmail">Loading...</span>
     </div>
 
-    <div id="photoModal" class="modal" onclick="closeModal()">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <button class="close-btn" onclick="closeModal()">X</button>
-            <h4 style="margin:5px 0 10px;">Attendance Photo</h4>
-            <img id="modalImg" src="">
-        </div>
+    <div class="content">
+        <div id="loading">⌛ Loading records...</div>
+        <table id="historyTable" style="display:none;">
+            <thead>
+                <tr>
+                    <th>Date & Time</th>
+                    <th>Type</th>
+                    <th>Project</th>
+                    <th>Location</th>
+                    <th>Photo</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
     </div>
+</div>
+
+<div id="photoModal" class="modal" onclick="closeModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <button class="close-btn" onclick="closeModal()">X</button>
+        <h4 style="margin:5px 0 10px;">Attendance Photo</h4>
+        <img id="modalImg" src="">
+    </div>
+</div>
 
 <script>
-const firebaseConfig = { apiKey: "AIzaSyCV5tKJMLOVcXiZUyuJZhLWOOSD96gsmP0", authDomain: "attendencewebapp-4215b.firebaseapp.com", projectId: "attendencewebapp-4215b" };
+// --- ⚠️ PASTE YOUR NEW API KEY BELOW ⚠️ ---
+const firebaseConfig = {
+  apiKey: "AIzaSyBzdM77WwTSkxvF0lsxf2WLNLhjuGyNvQQ",
+  authDomain: "attendancewebapp-ef02a.firebaseapp.com",
+  projectId: "attendancewebapp-ef02a",
+  storageBucket: "attendancewebapp-ef02a.firebasestorage.app",
+  messagingSenderId: "734213881030",
+  appId: "1:734213881030:web:bfdcee5a2ff293f87e6bc7"
+};
+
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
@@ -142,17 +156,18 @@ function loadHistory(email) {
                   dateStr = new Date(data.timestamp.seconds * 1000).toLocaleString();
               }
 
-              // 2. LOCATION (Using String Concatenation to avoid JSP Errors)
+              // 2. LOCATION (Fixed Google Maps Link)
               let mapLink = "<span style='color:#999'>No Loc</span>";
               if (data.location && data.location.lat && data.location.lng) {
-                  // Fixed Google Maps Link
                   mapLink = "<a class='btn-map' href='https://www.google.com/maps/search/?api=1&query=" + data.location.lat + "," + data.location.lng + "' target='_blank'>View Map</a>";
               }
 
-              // 3. PHOTO BUTTON
+              // 3. PHOTO BUTTON (Supports both Storage URL and Base64)
               let photoBtn = "<span style='color:#ccc'>No Photo</span>";
-              if (data.photo && typeof data.photo === 'string' && data.photo.startsWith("data:image")) {
-                  photoBtn = "<button class='btn-view' onclick='openPhoto(" + index + ")'>View</button>";
+              if (data.photo) {
+                  if(data.photo.startsWith("http") || data.photo.startsWith("data:image")) {
+                      photoBtn = "<button class='btn-view' onclick='openPhoto(" + index + ")'>View</button>";
+                  }
               }
 
               // 4. BADGE & PROJECT
@@ -160,7 +175,7 @@ function loadHistory(email) {
               let badgeClass = (type === 'IN') ? 'in' : 'out';
               let project = data.project || "General";
 
-              // BUILD ROW (Standard String Concatenation - No Backticks)
+              // BUILD ROW
               rowsHtml += "<tr>";
               rowsHtml += "<td>" + dateStr + "</td>";
               rowsHtml += "<td><span class='badge " + badgeClass + "'>" + type + "</span></td>";
@@ -174,7 +189,10 @@ function loadHistory(email) {
       })
       .catch(error => {
           console.error("Error:", error);
-          document.getElementById("loading").innerText = "Error: " + error.message;
+          if(error.message.includes("requires an index")) {
+              alert("⚠️ Missing Database Index.\nCheck the console (F12) for the creation link.");
+          }
+          document.getElementById("loading").innerText = "Error loading data.";
           document.getElementById("loading").style.display = "block";
       });
 }
@@ -192,6 +210,8 @@ function openPhoto(index) {
 function closeModal() {
     document.getElementById("photoModal").style.display = "none";
 }
+
+function logout(){ auth.signOut().then(() => location.href = "login.jsp"); }
 </script>
 
 </body>

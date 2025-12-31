@@ -127,7 +127,16 @@ button { padding: 8px 15px; cursor: pointer; border-radius: 4px; border: 1px sol
 </div>
 
 <script>
-const firebaseConfig = { apiKey: "AIzaSyCV5tKJMLOVcXiZUyuJZhLWOOSD96gsmP0", authDomain: "attendencewebapp-4215b.firebaseapp.com", projectId: "attendencewebapp-4215b" };
+// --- ⚠️ CONFIG: USING YOUR NEW PROJECT ID ---
+const firebaseConfig = {
+  apiKey: "AIzaSyBzdM77WwTSkxvF0lsxf2WLNLhjuGyNvQQ",
+  authDomain: "attendancewebapp-ef02a.firebaseapp.com",
+  projectId: "attendancewebapp-ef02a",
+  storageBucket: "attendancewebapp-ef02a.firebasestorage.app",
+  messagingSenderId: "734213881030",
+  appId: "1:734213881030:web:bfdcee5a2ff293f87e6bc7"
+};
+
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
@@ -203,7 +212,11 @@ function fetchSalary() {
         .catch(err => {
             console.error(err);
             document.getElementById("loadingMsg").style.display = "none";
-            alert("Error fetching data: " + err.message);
+            if(err.message.includes("requires an index")) {
+                alert("⚠️ SYSTEM ALERT: Database Index Missing for Salary Query.\nCheck Console (F12) for the creation link.");
+            } else {
+                alert("Error fetching data: " + err.message);
+            }
         });
 }
 

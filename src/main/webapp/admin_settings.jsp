@@ -178,7 +178,16 @@ button { margin-top: 0; padding: 8px 12px; border: none; border-radius: 4px; fon
 </div>
 
 <script>
-const firebaseConfig = { apiKey: "AIzaSyCV5tKJMLOVcXiZUyuJZhLWOOSD96gsmP0", authDomain: "attendencewebapp-4215b.firebaseapp.com", projectId: "attendencewebapp-4215b" };
+// --- ⚠️ PASTE YOUR NEW API KEY BELOW ⚠️ ---
+const firebaseConfig = {
+  apiKey: "AIzaSyBzdM77WwTSkxvF0lsxf2WLNLhjuGyNvQQ",
+  authDomain: "attendancewebapp-ef02a.firebaseapp.com",
+  projectId: "attendancewebapp-ef02a",
+  storageBucket: "attendancewebapp-ef02a.firebasestorage.app",
+  messagingSenderId: "734213881030",
+  appId: "1:734213881030:web:bfdcee5a2ff293f87e6bc7"
+};
+
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
@@ -213,65 +222,61 @@ function loadUsers() {
 
         snap.forEach(doc => {
             const u = doc.data();
-            // Default status 'Approved' for legacy users so they don't get locked out
+            const email = u.email; // Using email as the ID for consistency
             const status = u.status || "Approved"; 
-            const isMe = u.email === currentUserEmail;
+            const isMe = email === currentUserEmail;
 
             // 1. FILL SHIFT DROPDOWN (Employees Only)
             if(u.role !== 'admin') {
                 let opt = document.createElement("option");
-                opt.value = u.email;
-                opt.text = (u.fullName || "User") + " (" + u.email + ")";
+                opt.value = email;
+                opt.text = (u.fullName || "User") + " (" + email + ")";
                 shiftSelect.appendChild(opt);
             }
 
             // 2. PENDING REQUESTS TABLE
             if (status === 'Pending') {
                 pendingCount++;
-                pendingTb.innerHTML += `
-                    <tr>
-                        <td>\${u.fullName}</td>
-                        <td>\${u.email}</td>
-                        <td>\${u.contact || '-'}</td>
-                        <td>
-                            <button class="btn-green" onclick="updateStatus('\${doc.id}', 'Approved')">✅ Approve</button>
-                            <button class="btn-disable" onclick="updateStatus('\${doc.id}', 'Disabled')">🚫 Reject</button>
-                        </td>
-                    </tr>`;
+                let row = "<tr>";
+                row += "<td>" + u.fullName + "</td>";
+                row += "<td>" + u.email + "</td>";
+                row += "<td>" + (u.contact || '-') + "</td>";
+                row += "<td>";
+                row += "<button class='btn-green' onclick='updateStatus(\"" + email + "\", \"Approved\")'>✅ Approve</button> ";
+                row += "<button class='btn-disable' onclick='updateStatus(\"" + email + "\", \"Disabled\")'>🚫 Reject</button>";
+                row += "</td></tr>";
+                pendingTb.innerHTML += row;
             }
 
             // 3. MAIN USER TABLE
-            // Role Logic
-            let roleHtml = isMe ? "<b>ADMIN</b>" : `
-                <select id="role_\${doc.id}" style="padding:5px;">
-                    <option value="employee" \${u.role==='employee'?'selected':''}>Employee</option>
-                    <option value="admin" \${u.role==='admin'?'selected':''}>Admin</option>
-                </select>
-            `;
-            let roleBtn = isMe ? "-" : `<button class="btn-save" onclick="updateRole('\${doc.id}')">Save Role</button>`;
+            let roleHtml = isMe ? "<b>ADMIN</b>" : "<select id='role_" + email.replace(/[@.]/g, '') + "' style='padding:5px;'>" +
+                "<option value='employee' " + (u.role==='employee'?'selected':'') + ">Employee</option>" +
+                "<option value='admin' " + (u.role==='admin'?'selected':'') + ">Admin</option>" +
+                "</select>";
+            
+            let roleBtn = isMe ? "-" : "<button class='btn-save' onclick='updateRole(\"" + email + "\")'>Save Role</button>";
 
-            // Status Logic (Disable/Enable)
             let actionBtn = "";
             if(isMe) {
                 actionBtn = "-";
             } else if (status === 'Disabled') {
-                actionBtn = `<button class="btn-enable" onclick="updateStatus('\${doc.id}', 'Approved')">🔄 Re-Enable</button>`;
+                actionBtn = "<button class='btn-enable' onclick='updateStatus(\"" + email + "\", \"Approved\")'>🔄 Re-Enable</button>";
             } else {
-                actionBtn = `<button class="btn-disable" onclick="updateStatus('\${doc.id}', 'Disabled')">🚫 Disable</button>`;
+                actionBtn = "<button class='btn-disable' onclick='updateStatus(\"" + email + "\", \"Disabled\")'>🚫 Disable</button>";
             }
 
-            userTb.innerHTML += `
-                <tr>
-                    <td>\${u.fullName}</td>
-                    <td>\${u.email}</td>
-                    <td>\${roleHtml}</td>
-                    <td><span class="badge bg-\${status}">\${status}</span></td>
-                    <td>\${roleBtn}</td>
-                    <td>\${actionBtn}</td>
-                </tr>`;
+            let uRow = "<tr>";
+            uRow += "<td>" + u.fullName + "</td>";
+            uRow += "<td>" + u.email + "</td>";
+            uRow += "<td>" + roleHtml + "</td>";
+            uRow += "<td><span class='badge bg-" + status + "'>" + status + "</span></td>";
+            uRow += "<td>" + roleBtn + "</td>";
+            uRow += "<td>" + actionBtn + "</td>";
+            uRow += "</tr>";
+            
+            userTb.innerHTML += uRow;
         });
 
-        // Toggle Pending Section
         if(pendingCount > 0) pendingSec.style.display = "block";
         else pendingSec.style.display = "none";
         
@@ -288,14 +293,17 @@ function updateStatus(email, newStatus) {
 }
 
 function updateRole(email) {
-    const newRole = document.getElementById("role_" + email).value;
+    // Sanitize ID selector because IDs can't have dots or @ easily in some browsers
+    const selId = "role_" + email.replace(/[@.]/g, '');
+    const newRole = document.getElementById(selId).value;
+    
     db.collection("users").doc(email).update({ role: newRole }).then(() => {
         alert("Role Updated!");
         loadUsers();
     });
 }
 
-/* --- SHIFT LOGIC (KEPT FROM YOUR CODE) --- */
+/* --- SHIFT LOGIC --- */
 function loadUserShift() {
     const email = document.getElementById("shiftUserSelect").value;
     const editor = document.getElementById("shiftEditor");

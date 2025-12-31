@@ -106,9 +106,12 @@ button { padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; 
 <script>
 /* 🔥 FIREBASE CONFIG */
 const firebaseConfig = {
-  apiKey: "AIzaSyCV5tKJMLOVcXiZUyuJZhLWOOSD96gsmP0",
-  authDomain: "attendencewebapp-4215b.firebaseapp.com",
-  projectId: "attendencewebapp-4215b"
+  apiKey: "AIzaSyBzdM77WwTSkxvF0lsxf2WLNLhjuGyNvQQ",
+  authDomain: "attendancewebapp-ef02a.firebaseapp.com",
+  projectId: "attendancewebapp-ef02a",
+  storageBucket: "attendancewebapp-ef02a.firebasestorage.app",
+  messagingSenderId: "734213881030",
+  appId: "1:734213881030:web:bfdcee5a2ff293f87e6bc7"
 };
 
 if (!firebase.apps.length) {

@@ -91,7 +91,7 @@ tr:hover { background: #f8f9fa; }
       <a href="admin_task_monitoring.jsp">📝 Task Monitoring</a>
       <a href="reports.jsp">📅 Attendance Reports</a>
       <a href="payroll.jsp">💰 Payroll Management</a>
-      <a href="admin_expenses.jsp" class="active">💸 Expense Approvals</a>
+      <a href="admin_expenses.jsp">💸 Expense Approvals</a>
       <a href="admin_settings.jsp">⚙️ Settings</a>
       <a href="#" onclick="logout()" style="margin-top:auto; background:#1a1d20;">🚪 Logout</a>
     </div>
@@ -215,7 +215,16 @@ tr:hover { background: #f8f9fa; }
 </div>
 
 <script>
-const firebaseConfig = { apiKey: "AIzaSyCV5tKJMLOVcXiZUyuJZhLWOOSD96gsmP0", authDomain: "attendencewebapp-4215b.firebaseapp.com", projectId: "attendencewebapp-4215b" };
+// --- ⚠️ PASTE YOUR NEW API KEY BELOW ⚠️ ---
+const firebaseConfig = {
+  apiKey: "AIzaSyBzdM77WwTSkxvF0lsxf2WLNLhjuGyNvQQ",
+  authDomain: "attendancewebapp-ef02a.firebaseapp.com",
+  projectId: "attendancewebapp-ef02a",
+  storageBucket: "attendancewebapp-ef02a.firebasestorage.app",
+  messagingSenderId: "734213881030",
+  appId: "1:734213881030:web:bfdcee5a2ff293f87e6bc7"
+};
+
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
@@ -468,7 +477,6 @@ function loadProjectChat(projId, projName) {
                 const isMine = m.sender === auth.currentUser.email;
                 const mineClass = isMine ? "msg-mine" : "msg-other";
                 
-                // FIXED: Using String Concatenation to avoid JSP Errors
                 let bubble = "<div class='chat-msg " + mineClass + "'>";
                 bubble += "<b>" + m.senderName + ":</b> " + m.text;
                 bubble += "</div>";

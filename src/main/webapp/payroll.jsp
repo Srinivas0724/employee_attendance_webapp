@@ -67,7 +67,7 @@ button { padding: 10px 15px; border: none; border-radius: 4px; font-weight: bold
   <a href="admin_task_monitoring.jsp">📝 Task Monitoring</a>
   <a href="reports.jsp">📅 Attendance Reports</a>
   <a href="payroll.jsp" class="active">💰 Payroll Management</a>
-  <a href="admin_expenses.jsp" class="active">💸 Expense Approvals</a>
+  <a href="admin_expenses.jsp">💸 Expense Approvals</a>
   <a href="admin_settings.jsp">⚙️ Settings</a>
   <a href="#" onclick="logout()" style="margin-top:auto; background:#1a1d20;">🚪 Logout</a>
 </div>
@@ -159,7 +159,16 @@ button { padding: 10px 15px; border: none; border-radius: 4px; font-weight: bold
 </div>
 
 <script>
-const firebaseConfig = { apiKey: "AIzaSyCV5tKJMLOVcXiZUyuJZhLWOOSD96gsmP0", authDomain: "attendencewebapp-4215b.firebaseapp.com", projectId: "attendencewebapp-4215b" };
+// --- ⚠️ PASTE YOUR NEW API KEY HERE ⚠️ ---
+const firebaseConfig = {
+  apiKey: "AIzaSyBzdM77WwTSkxvF0lsxf2WLNLhjuGyNvQQ",
+  authDomain: "attendancewebapp-ef02a.firebaseapp.com",
+  projectId: "attendancewebapp-ef02a",
+  storageBucket: "attendancewebapp-ef02a.firebasestorage.app",
+  messagingSenderId: "734213881030",
+  appId: "1:734213881030:web:bfdcee5a2ff293f87e6bc7"
+};
+
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
@@ -204,7 +213,7 @@ function loadEmployees() {
     });
 }
 
-/* 2. HANDLE SELECTION: Fetch Salary AND Attendance */
+/* 2. HANDLE SELECTION */
 function handleEmployeeChange() {
     const email = document.getElementById("empSelect").value;
     if(!email) return;
@@ -239,6 +248,12 @@ function fetchEmployeeStats(email) {
         .then(snap => {
             document.getElementById("daysPresent").value = snap.size;
             calcPreview();
+        })
+        .catch(error => {
+            console.error(error);
+            if(error.message.includes("requires an index")) {
+                alert("⚠️ SYSTEM ALERT: A database index is missing for this query.\n\nOpen Console (F12) and click the link to create it.");
+            }
         });
 }
 
@@ -263,6 +278,7 @@ function calcPreview() {
     const bonus = parseFloat(document.getElementById("bonus").value) || 0;
     const ded = parseFloat(document.getElementById("deductions").value) || 0;
     
+    // Simple Prorated Calculation (Salary / 30 * Days Present)
     const perDay = salary / 30; 
     const earned = (perDay * present) + bonus - ded;
     

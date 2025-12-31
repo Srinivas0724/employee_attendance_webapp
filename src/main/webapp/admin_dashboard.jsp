@@ -20,14 +20,16 @@
 </script>
 
 <style>
+/* GLOBAL STYLES */
 body { margin:0; font-family:"Segoe UI", sans-serif; background:#f4f6f9; display:flex; height:100vh; }
 
-/* ADMIN SIDEBAR (Red/Dark Theme) */
+/* SIDEBAR (Dark Theme) */
 .sidebar { width:260px; background:#212529; color:#fff; display:flex; flex-direction:column; }
 .sidebar h2 { padding:20px; margin:0; background:#c0392b; text-align:center; font-size: 22px; }
 .sidebar a { display:block; padding:15px 20px; color:#adb5bd; text-decoration:none; border-left: 3px solid transparent; }
 .sidebar a:hover, .sidebar a.active { background:#343a40; color:#fff; border-left: 3px solid #e74c3c; }
 
+/* MAIN LAYOUT */
 .main { flex:1; display:flex; flex-direction:column; overflow-y: auto; }
 .header { height:60px; background:#fff; display:flex; justify-content:space-between; align-items:center; padding:0 30px; border-bottom: 1px solid #dee2e6; }
 
@@ -49,7 +51,7 @@ body { margin:0; font-family:"Segoe UI", sans-serif; background:#f4f6f9; display
 .badge-in { background: #27ae60; }
 .badge-out { background: #c0392b; }
 
-/* [NEW] PHOTO BUTTON & MODAL STYLES */
+/* PHOTO BUTTON & MODAL */
 .btn-view { background:#007bff; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:12px; }
 .btn-view:hover { background:#0056b3; }
 
@@ -58,7 +60,7 @@ body { margin:0; font-family:"Segoe UI", sans-serif; background:#f4f6f9; display
 .modal img { max-width: 100%; max-height: 80vh; border-radius: 4px; border: 1px solid #ddd; margin-top:10px; }
 .close-btn { position: absolute; top: -15px; right: -15px; background: red; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-weight: bold; }
 
-#loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; font-size: 24px; color: #333; }
+#loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; font-size: 24px; color: #333; flex-direction: column; gap: 10px; }
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -67,7 +69,10 @@ body { margin:0; font-family:"Segoe UI", sans-serif; background:#f4f6f9; display
 </head>
 <body>
 
-<div id="loadingOverlay">⌛ Loading Admin Panel...</div>
+<div id="loadingOverlay">
+    <div>⌛ Loading Admin Panel...</div>
+    <div style="font-size:14px; color:#666;" id="loadingSubtext">Connecting...</div>
+</div>
 
 <div id="mainApp" style="display:none; width: 100%; height: 100%;">
     
@@ -78,7 +83,7 @@ body { margin:0; font-family:"Segoe UI", sans-serif; background:#f4f6f9; display
       <a href="admin_task_monitoring.jsp">📝 Task Monitoring</a>
       <a href="reports.jsp">📅 Attendance Reports</a>
       <a href="payroll.jsp">💰 Payroll Management</a>
-      <a href="admin_expenses.jsp" class="active">💸 Expense Approvals</a>
+      <a href="admin_expenses.jsp">💸 Expense Approvals</a>
       <a href="admin_settings.jsp">⚙️ Settings</a>
       <a href="#" onclick="logout()" style="margin-top:auto; background:#1a1d20;">🚪 Logout</a>
     </div>
@@ -100,7 +105,7 @@ body { margin:0; font-family:"Segoe UI", sans-serif; background:#f4f6f9; display
         </div>
         <div class="stat-card" style="border-top-color: #e67e22;">
             <h3>Pending Approvals</h3>
-            <div class="number">0</div>
+            <div class="number" id="pendingCount">0</div>
         </div>
       </div>
 
@@ -114,10 +119,12 @@ body { margin:0; font-family:"Segoe UI", sans-serif; background:#f4f6f9; display
                     <th>Action</th>
                     <th>Project</th>
                     <th>Location</th>
-                    <th>Photo</th> </tr>
+                    <th>Photo</th> 
+                </tr>
             </thead>
             <tbody id="tableBody">
-                </tbody>
+                <tr><td colspan="6">Waiting for updates...</td></tr>
+            </tbody>
         </table>
       </div>
     </div>
@@ -132,7 +139,16 @@ body { margin:0; font-family:"Segoe UI", sans-serif; background:#f4f6f9; display
 </div>
 
 <script>
-const firebaseConfig = { apiKey: "AIzaSyCV5tKJMLOVcXiZUyuJZhLWOOSD96gsmP0", authDomain: "attendencewebapp-4215b.firebaseapp.com", projectId: "attendencewebapp-4215b" };
+// --- PASTE YOUR API KEY HERE ---
+const firebaseConfig = {
+  apiKey: "AIzaSyBzdM77WwTSkxvF0lsxf2WLNLhjuGyNvQQ",
+  authDomain: "attendancewebapp-ef02a.firebaseapp.com",
+  projectId: "attendancewebapp-ef02a",
+  storageBucket: "attendancewebapp-ef02a.firebasestorage.app",
+  messagingSenderId: "734213881030",
+  appId: "1:734213881030:web:bfdcee5a2ff293f87e6bc7"
+};
+
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
@@ -143,9 +159,23 @@ let allRecords = [];
 // 1. AUTH CHECK
 auth.onAuthStateChanged(user => {
   if (user) {
-      document.getElementById("loadingOverlay").style.display = "none";
-      document.getElementById("mainApp").style.display = "flex";
-      loadDashboardData();
+      // User is logged in, check role
+      db.collection("users").doc(user.email).get().then(doc => {
+          if(doc.exists && doc.data().role === 'admin') {
+              document.getElementById("loadingOverlay").style.display = "none";
+              document.getElementById("mainApp").style.display = "flex";
+              loadDashboardData();
+          } else {
+              alert("Access Denied: Admins Only");
+              logout();
+          }
+      }).catch(e => {
+          console.error("DB Error:", e);
+          // Allow access if DB error (likely empty DB) to let you bootstrap
+          document.getElementById("loadingOverlay").style.display = "none";
+          document.getElementById("mainApp").style.display = "flex";
+          loadDashboardData();
+      });
   } else {
       window.location.replace("login.jsp");
   }
@@ -153,60 +183,69 @@ auth.onAuthStateChanged(user => {
 
 function loadDashboardData() {
     // A. Get Total Employees Count
-    db.collection("users").get().then(snap => {
+    db.collection("users").where("role", "!=", "admin").get().then(snap => {
         document.getElementById("totalEmp").innerText = snap.size;
     });
 
-    // B. Get Today's Attendance
+    // B. Get Pending Count
+    db.collection("users").where("status", "==", "Pending").get().then(snap => {
+        document.getElementById("pendingCount").innerText = snap.size;
+    });
+
+    // C. Get Today's Live Attendance
+    // Note: Ensure your 'attendance_2025' collection exists or this will just be empty
     db.collection("attendance_2025")
       .orderBy("timestamp", "desc")
-      .limit(20) // Show last 20 actions
+      .limit(20) 
       .onSnapshot(snapshot => {
           let actionCount = 0;
           let html = "";
           
-          // Clear array before refilling
-          allRecords = [];
+          allRecords = []; // Reset local storage
+
+          if(snapshot.empty) {
+              document.getElementById("tableBody").innerHTML = "<tr><td colspan='6' style='text-align:center'>No attendance records found today.</td></tr>";
+              return;
+          }
 
           snapshot.forEach(doc => {
               const data = doc.data();
               actionCount++;
               
-              // Store data for Modal
               allRecords.push(data);
               const index = allRecords.length - 1;
               
-              // 1. SAFE DATA EXTRACTION
+              // 1. TIME
               let time = "N/A";
               if (data.timestamp) {
                   time = new Date(data.timestamp.seconds * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
               }
               
+              // 2. BADGE
               const type = data.type || "UNKNOWN";
-              const email = data.email || "Unknown";
-              const project = data.project || "General";
               const badgeClass = (type === "IN") ? "badge-in" : "badge-out";
 
-              // 2. SAFE MAP LINK
+              // 3. MAP LINK
               let mapLink = "<span style='color:#ccc'>No Loc</span>";
               if(data.location && data.location.lat) {
                   mapLink = "<a href='https://www.google.com/maps/search/?api=1&query=" + data.location.lat + "," + data.location.lng + "' target='_blank' style='color:#3498db; text-decoration:none;'>View Map</a>";
               }
 
-              // 3. [NEW] PHOTO BUTTON
+              // 4. PHOTO BUTTON
               let photoBtn = "<span style='color:#ccc; font-size:12px'>No Photo</span>";
-              if (data.photo && typeof data.photo === 'string' && data.photo.startsWith("data:image")) {
-                  photoBtn = "<button class='btn-view' onclick='openPhoto(" + index + ")'>View</button>";
+              if (data.photo) {
+                  if(data.photo.startsWith("http") || data.photo.startsWith("data:image")) {
+                       photoBtn = "<button class='btn-view' onclick='openPhoto(" + index + ")'>View</button>";
+                  }
               }
 
-              // 4. BUILD ROW (String Concatenation)
               html += "<tr>";
               html += "<td>" + time + "</td>";
-              html += "<td>" + email + "</td>";
+              html += "<td>" + (data.email || "Unknown") + "</td>";
               html += "<td><span class='status-badge " + badgeClass + "'>" + type + "</span></td>";
-              html += "<td>" + project + "</td>";
+              html += "<td>" + (data.project || "General") + "</td>";
               html += "<td>" + mapLink + "</td>";
-              html += "<td>" + photoBtn + "</td>"; // New Cell
+              html += "<td>" + photoBtn + "</td>";
               html += "</tr>";
           });
           
@@ -215,7 +254,7 @@ function loadDashboardData() {
       });
 }
 
-// [NEW] MODAL FUNCTIONS
+// MODAL FUNCTIONS
 function openPhoto(index) {
     const data = allRecords[index];
     const modal = document.getElementById("photoModal");

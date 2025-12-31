@@ -47,12 +47,13 @@
     <script>
         // --- CONFIG (Do not change) ---
         const firebaseConfig = {
-            apiKey: "AIzaSyCV5tKJMLOVcXiZUyuJZhLWOOSD96gsmP0",
-            projectId: "attendencewebapp-4215b",
-            storageBucket: "attendencewebapp-4215b.firebasestorage.app",
-            messagingSenderId: "97124588288",
-            appId: "1:97124588288:web:08507eaacdc6155ad1b1e5"
-        };
+  apiKey: "AIzaSyBzdM77WwTSkxvF0lsxf2WLNLhjuGyNvQQ",
+  authDomain: "attendancewebapp-ef02a.firebaseapp.com",
+  projectId: "attendancewebapp-ef02a",
+  storageBucket: "attendancewebapp-ef02a.firebasestorage.app",
+  messagingSenderId: "734213881030",
+  appId: "1:734213881030:web:bfdcee5a2ff293f87e6bc7"
+};
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const COLLECTION_NAME = "attendance_2025"; // The new database room

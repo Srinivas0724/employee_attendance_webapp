@@ -115,12 +115,16 @@ th { background-color: #f8f9fa; }
 </div>
 
 <script>
-/* CONFIG */
-const firebaseConfig = { 
-    apiKey: "AIzaSyCV5tKJMLOVcXiZUyuJZhLWOOSD96gsmP0", 
-    authDomain: "attendencewebapp-4215b.firebaseapp.com", 
-    projectId: "attendencewebapp-4215b"
+// --- ⚠️ PASTE YOUR NEW API KEY HERE ⚠️ ---
+const firebaseConfig = {
+  apiKey: "AIzaSyBzdM77WwTSkxvF0lsxf2WLNLhjuGyNvQQ",
+  authDomain: "attendancewebapp-ef02a.firebaseapp.com",
+  projectId: "attendancewebapp-ef02a",
+  storageBucket: "attendancewebapp-ef02a.firebasestorage.app",
+  messagingSenderId: "734213881030",
+  appId: "1:734213881030:web:bfdcee5a2ff293f87e6bc7"
 };
+
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
@@ -132,7 +136,7 @@ auth.onAuthStateChanged(user => {
   loadExpenses(user.email);
 });
 
-/* ADD EXPENSE (NO UPLOAD) */
+/* ADD EXPENSE */
 function addExpense(){
     const user = auth.currentUser;
     const type = document.getElementById("expType").value;
@@ -141,12 +145,10 @@ function addExpense(){
 
     if(!amount){ alert("Enter amount"); return; }
 
-    // UI Loading State
     const btn = document.getElementById("submitBtn");
     btn.innerText = "Submitting...";
     btn.disabled = true;
 
-    // Simple Save to DB
     db.collection("expenses").add({
         email: user.email,
         type: type,
@@ -166,14 +168,18 @@ function addExpense(){
 
 /* LOAD EXPENSES */
 function loadExpenses(email){
+    const tbody = document.getElementById("tableBody");
+    
     db.collection("expenses")
       .where("email", "==", email)
       .orderBy("date", "desc")
       .get()
       .then(snap => {
-          const tbody = document.getElementById("tableBody");
           tbody.innerHTML = "";
-          if(snap.empty){ tbody.innerHTML = "<tr><td colspan='5'>No records found</td></tr>"; return; }
+          if(snap.empty){ 
+              tbody.innerHTML = "<tr><td colspan='5' style='text-align:center'>No records found</td></tr>"; 
+              return; 
+          }
           
           snap.forEach(doc => {
               const d = doc.data();
@@ -189,6 +195,16 @@ function loadExpenses(email){
 
               tbody.innerHTML += row;
           });
+      })
+      .catch(error => {
+          // ⚠️ CATCHES MISSING INDEX ERRORS
+          console.error("Error loading expenses:", error);
+          if(error.message.includes("requires an index")) {
+              alert("⚠️ SYSTEM ALERT: A database index is missing.\n\nOpen the Browser Console (F12) and click the link in the error message to create it.");
+              tbody.innerHTML = "<tr><td colspan='5' style='color:red'>Database Index Missing (See Console)</td></tr>";
+          } else {
+              tbody.innerHTML = "<tr><td colspan='5' style='color:red'>Error: " + error.message + "</td></tr>";
+          }
       });
 }
 
