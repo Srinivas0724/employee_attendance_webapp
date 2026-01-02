@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AKA Attendance App</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #e9ecef;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+        .card {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 250px;
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        h2 { color: #333; margin-bottom: 20px; }
+        p { color: #666; margin-bottom: 30px; }
+        
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            text-decoration: none;
+            box-sizing: border-box;
+        }
+        
+        /* Button Colors */
+        .btn-admin { background-color: #343a40; color: white; }
+        .btn-user { background-color: #007bff; color: white; }
+        .btn-signup { background-color: #28a745; color: white; }
+        
+        .btn:hover { opacity: 0.9; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="card">
+            <h2>Admin Portal</h2>
+            <p>Manage attendance records and view reports.</p>
+            <a href="login.jsp" class="btn btn-admin">Admin Login</a>
+        </div>
+
+        <div class="card">
+            <h2>Employee Portal</h2>
+            <p>Mark your daily attendance and view history.</p>
+            <a href="login.jsp" class="btn btn-user">Employee Login</a>
+            <a href="signup.jsp" class="btn btn-signup">New User? Sign Up</a>
+        </div>
+    </div>
+
+</body>
+</html>
