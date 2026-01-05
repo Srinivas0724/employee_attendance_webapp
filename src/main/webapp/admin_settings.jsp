@@ -5,375 +5,506 @@
   response.setDateHeader("Expires", 0);
 %>
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Admin Settings - emPower</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Settings - Synod Bioscience</title>
+    
+    <style>
+        /* --- 1. RESET & VARS (NEW THEME) --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        :root {
+            --primary-navy: #1a3b6e;
+            --primary-green: #2ecc71;
+            --bg-light: #f4f6f9;
+            --text-dark: #333;
+            --text-grey: #666;
+            --sidebar-width: 260px;
+        }
 
-<style>
-/* GLOBAL STYLES */
-body { margin:0; font-family:"Segoe UI", sans-serif; background:#f4f6f9; display:flex; height:100vh; color:#333; }
+        body { display: flex; height: 100vh; background-color: var(--bg-light); overflow: hidden; }
 
-/* SIDEBAR */
-.sidebar { width:260px; background:#212529; color:#fff; display:flex; flex-direction:column; }
-.sidebar h2 { padding:20px; margin:0; background:#c0392b; text-align:center; font-size: 22px; }
-.sidebar a { display:block; padding:15px 20px; color:#adb5bd; text-decoration:none; border-left: 3px solid transparent; }
-.sidebar a:hover, .sidebar a.active { background:#343a40; color:#fff; border-left: 3px solid #e74c3c; }
+        /* --- 2. SIDEBAR --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--primary-navy);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            transition: width 0.3s;
+            flex-shrink: 0;
+        }
 
-/* MAIN CONTENT */
-.main { flex:1; display:flex; flex-direction:column; overflow-y: auto; }
-.header { height:60px; background:#fff; display:flex; justify-content:space-between; align-items:center; padding:0 30px; border-bottom: 1px solid #dee2e6; }
-.content { padding: 30px; display:flex; flex-direction:column; gap:30px; }
+        .sidebar-header {
+            padding: 20px;
+            background-color: rgba(0,0,0,0.1);
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
 
-/* CARDS */
-.card { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); width: 100%; box-sizing: border-box; }
-.card h3 { margin-top: 0; color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
+        .sidebar-logo {
+            max-width: 140px;
+            height: auto;
+            margin-bottom: 10px;
+            filter: brightness(0) invert(1);
+        }
+        
+        .sidebar-brand { font-size: 14px; opacity: 0.8; letter-spacing: 1px; text-transform: uppercase; }
 
-/* ROW LAYOUT */
-.row { display: flex; gap: 20px; flex-wrap: wrap; }
-.col { flex: 1; min-width: 300px; }
+        .nav-menu {
+            list-style: none;
+            padding: 20px 0;
+            flex: 1;
+            overflow-y: auto;
+        }
 
-/* INPUTS */
-label { font-weight: bold; font-size: 13px; color: #555; display: block; margin-top: 15px; }
-input, select { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ced4da; border-radius: 4px; box-sizing: border-box; }
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            padding: 15px 25px;
+            color: #bdc3c7;
+            text-decoration: none;
+            font-size: 15px;
+            transition: all 0.3s;
+            border-left: 4px solid transparent;
+        }
 
-/* SHIFT GRID */
-.shift-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-top: 15px; }
-.day-box { background: #f8f9fa; padding: 10px; border-radius: 5px; border: 1px solid #eee; text-align: center; }
-.day-box label { margin-top: 0; margin-bottom: 5px; color: #2980b9; }
-.day-box input { padding: 5px; text-align: center; }
+        .nav-item a:hover, .nav-item a.active {
+            background-color: rgba(255,255,255,0.05);
+            color: white;
+            border-left-color: var(--primary-green);
+        }
 
-/* TABLE */
-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-th { background: #34495e; color: white; padding: 12px; text-align: left; font-size: 14px; }
-td { padding: 12px; border-bottom: 1px solid #eee; color: #333; vertical-align: middle; }
+        .nav-icon { margin-right: 15px; font-size: 18px; width: 25px; text-align: center; }
 
-/* BUTTONS */
-button { margin-top: 0; padding: 8px 12px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; transition: 0.3s; font-size:12px; }
-.btn-green { background: #27ae60; color:white; }
-.btn-blue { background: #3498db; color:white; }
-.btn-disable { background: #e74c3c; color:white; }
-.btn-disable:hover { background: #c0392b; }
-.btn-enable { background: #3498db; color:white; }
-.btn-save { background: #34495e; color:white; }
-.btn-toggle { background: #34495e; color: white; width: auto; padding: 8px 15px; margin-top: 5px; }
-.btn-toggle.active { background: #27ae60; }
-.btn-toggle.inactive { background: #e74c3c; }
+        .sidebar-footer { padding: 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+        .btn-logout {
+            width: 100%;
+            padding: 12px;
+            background-color: rgba(231, 76, 60, 0.8);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .btn-logout:hover { background-color: #c0392b; }
 
-/* BADGES */
-.badge { padding: 5px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; color: white; display: inline-block; }
-.bg-Pending { background: #f1c40f; color: #333; }
-.bg-Approved { background: #27ae60; }
-.bg-Disabled { background: #e74c3c; }
+        /* --- 3. MAIN CONTENT --- */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
 
-/* LOADING */
-#loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; font-size: 24px; color: #333; }
-</style>
+        /* Top Bar */
+        .topbar {
+            background: white;
+            height: 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            position: sticky; top: 0; z-index: 100;
+        }
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+        .page-title { font-size: 20px; font-weight: bold; color: var(--primary-navy); }
+        .user-profile { font-size: 14px; color: var(--text-grey); display: flex; align-items: center; gap: 10px; }
+        .user-avatar { width: 35px; height: 35px; background: #e0e0e0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: var(--primary-navy); }
+
+        /* --- 4. PAGE CONTENT --- */
+        .content { padding: 30px; max-width: 1200px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 25px; }
+
+        /* Cards */
+        .card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 4px solid transparent; }
+        .card h3 { margin-top: 0; color: var(--primary-navy); border-bottom: 2px solid #f4f6f9; padding-bottom: 15px; margin-bottom: 20px; font-size: 18px; font-weight: bold; }
+
+        /* Card Borders */
+        .card-shifts { border-top-color: #3498db; }
+        .card-system { border-top-color: #9b59b6; }
+        .card-security { border-top-color: #f39c12; }
+        .card-users { border-top-color: #2ecc71; }
+
+        /* Grid */
+        .grid-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 25px; }
+
+        /* Forms */
+        label { font-weight: 600; font-size: 13px; color: #555; display: block; margin-bottom: 8px; margin-top: 15px; text-transform: uppercase; }
+        input, select { width: 100%; padding: 12px; border: 2px solid #f1f1f1; border-radius: 6px; box-sizing: border-box; font-size: 14px; transition: all 0.3s; }
+        input:focus, select:focus { border-color: var(--primary-navy); outline: none; background: #fff; }
+
+        /* Buttons */
+        button.action-btn { margin-top: 20px; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; transition: background 0.3s; width: 100%; color: white; }
+        
+        .btn-blue { background: #3498db; }
+        .btn-blue:hover { background: #2980b9; }
+        
+        .btn-green { background: var(--primary-green); }
+        .btn-green:hover { background: #27ae60; }
+        
+        .btn-red { background: #e74c3c; }
+        .btn-red:hover { background: #c0392b; }
+
+        /* User List Style */
+        .user-list-item { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 15px; border-bottom: 1px solid #f1f1f1; 
+            transition: background 0.2s;
+        }
+        .user-list-item:hover { background: #fdfdfd; }
+        
+        .user-info { display: flex; flex-direction: column; gap: 2px; }
+        .user-info b { color: #333; font-size: 14px; }
+        .user-info span { font-size: 12px; color: #777; }
+        
+        /* Action Area (Right Side) */
+        .user-actions { display: flex; align-items: center; gap: 10px; }
+
+        /* Role Dropdown */
+        .role-select {
+            padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px;
+            font-size: 12px; font-weight: bold; color: #555;
+            background-color: #f8f9fa; cursor: pointer; width: auto; margin: 0;
+        }
+        .role-select:focus { border-color: var(--primary-navy); }
+
+        /* Disable/Enable Button */
+        .btn-toggle {
+            padding: 7px 12px; border: none; border-radius: 4px;
+            font-size: 11px; font-weight: bold; color: white;
+            cursor: pointer; text-transform: uppercase; transition: 0.2s;
+        }
+        .btn-disable { background-color: #e74c3c; } /* Red */
+        .btn-disable:hover { background-color: #c0392b; }
+        
+        .btn-enable { background-color: #2ecc71; } /* Green */
+        .btn-enable:hover { background-color: #27ae60; }
+
+        #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; font-size: 24px; color: #333; flex-direction: column; gap: 10px; }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { position: absolute; left: -260px; height: 100%; z-index: 200; }
+            .sidebar.open { left: 0; }
+            .toggle-btn { display: block; margin-right: 15px; cursor: pointer; font-size: 24px; }
+        }
+        @media (min-width: 901px) { .toggle-btn { display: none; } }
+    </style>
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
-<div id="loadingOverlay">⌛ Loading Settings...</div>
-
-<div class="sidebar">
-  <h2>ADMIN PORTAL</h2>
-  <a href="admin_dashboard.jsp">📊 Dashboard</a>
-  <a href="manage_employees.jsp">👥 Manage Employees</a>
-  <a href="admin_task_monitoring.jsp">📝 Task Monitoring</a>
-  <a href="reports.jsp">📅 Attendance Reports</a>
-  <a href="payroll.jsp">💰 Payroll Management</a>
-  <a href="admin_expenses.jsp">💸 Expense Approvals</a>
-  <a href="admin_settings.jsp" class="active">⚙️ Settings</a>
-  <a href="#" onclick="logout()" style="margin-top:auto; background:#1a1d20;">🚪 Logout</a>
-</div>
-
-<div class="main">
-    <div class="header">
-        <h3>User Management & Settings</h3>
-        <span id="adminEmail" style="font-weight:bold; color:#555;">Loading...</span>
+    <div id="loadingOverlay">
+        <div style="font-size: 40px; margin-bottom: 10px;">⚙️</div>
+        <div>Loading System Settings...</div>
     </div>
 
-    <div class="content">
-        
-        <div class="card" id="pendingSection" style="display:none; border-left: 5px solid #f1c40f;">
-            <h3 style="color:#f39c12;">⏳ Pending Registrations</h3>
-            <p style="margin-top:0; font-size:14px; color:#666;">These users have signed up but cannot login until you approve them.</p>
-            <table>
-                <thead>
-                    <tr><th>Name</th><th>Email</th><th>Contact</th><th>Action</th></tr>
-                </thead>
-                <tbody id="pendingTable"></tbody>
-            </table>
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="synod_logo.png" alt="Synod Logo" class="sidebar-logo">
+            <div class="sidebar-brand">ADMIN PORTAL</div>
         </div>
 
-        <div class="card">
-            <h3>⏰ Employee Shift Manager</h3>
-            <p style="font-size:14px; color:#666; margin-top:0;">
-                Select an employee to define their daily start times. Type <b>"OFF"</b> for holidays.
-                <br><i>Format: HH:MM (24-hour) e.g., 09:00, 14:30</i>
-            </p>
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="admin_homepage.html"><span class="nav-icon">🏠</span> Home</a>
+            </li>
+            <li class="nav-item">
+                <a href="admin_dashboard.jsp"><span class="nav-icon">📊</span> Live Dashboard</a>
+            </li>
+            <li class="nav-item">
+                <a href="manage_employees.jsp"><span class="nav-icon">👥</span> Employees</a>
+            </li>
+            <li class="nav-item">
+                <a href="admin_task_monitoring.jsp"><span class="nav-icon">📝</span> Tasks</a>
+            </li>
+            <li class="nav-item">
+                <a href="admin_attendance.jsp"><span class="nav-icon">📅</span> Attendance</a>
+            </li>
+            <li class="nav-item">
+                <a href="admin_expenses.jsp"><span class="nav-icon">💸</span> Expenses</a>
+            </li>
+             <li class="nav-item">
+                <a href="payroll.jsp" class="active"><span class="nav-icon">💰</span> Payroll</a>
+            </li>
+            <li class="nav-item">
+                <a href="admin_settings.jsp" class="active"><span class="nav-icon">⚙️</span> Settings</a>
+            </li>
+        </ul>
 
-            <select id="shiftUserSelect" onchange="loadUserShift()">
-                <option value="">-- Select Employee to Edit Shift --</option>
-            </select>
+        <div class="sidebar-footer">
+            <button onclick="logout()" class="btn-logout"><span>🚪</span> Sign Out</button>
+        </div>
+    </nav>
 
-            <div id="shiftEditor" style="display:none;">
-                <div class="shift-grid">
-                    <div class="day-box"><label>Mon</label><input type="text" id="t_Mon" placeholder="09:30"></div>
-                    <div class="day-box"><label>Tue</label><input type="text" id="t_Tue" placeholder="09:30"></div>
-                    <div class="day-box"><label>Wed</label><input type="text" id="t_Wed" placeholder="09:30"></div>
-                    <div class="day-box"><label>Thu</label><input type="text" id="t_Thu" placeholder="09:30"></div>
-                    <div class="day-box"><label>Fri</label><input type="text" id="t_Fri" placeholder="09:30"></div>
-                    <div class="day-box"><label>Sat</label><input type="text" id="t_Sat" placeholder="09:30"></div>
-                    <div class="day-box"><label>Sun</label><input type="text" id="t_Sun" placeholder="OFF"></div>
+    <div class="main-content">
+        <header class="topbar">
+            <div style="display:flex; align-items:center;">
+                <div class="toggle-btn" onclick="toggleSidebar()">☰</div>
+                <div class="page-title">System Configuration</div>
+            </div>
+            <div class="user-profile">
+                <span id="adminEmail">Loading...</span>
+                <div class="user-avatar">A</div>
+            </div>
+        </header>
+
+        <div class="content">
+
+            <div class="card card-shifts">
+                <h3>⏰ Employee Shift Manager</h3>
+                <p style="color:#666; font-size:13px; margin-bottom:15px;">
+                    Select an employee to define their daily start times. Type "OFF" for holidays. 
+                    <br>Format: HH:MM (24-hour) e.g., 09:00, 14:30
+                </p>
+                
+                <select id="shiftEmpSelect" onchange="loadShifts()">
+                    <option value="">-- Select Employee to Edit Shift --</option>
+                </select>
+
+                <div id="shiftInputs" style="display:none; margin-top:20px;">
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap:15px;">
+                        <div><label>Mon</label><input type="text" id="shift_Mon" placeholder="09:30"></div>
+                        <div><label>Tue</label><input type="text" id="shift_Tue" placeholder="09:30"></div>
+                        <div><label>Wed</label><input type="text" id="shift_Wed" placeholder="09:30"></div>
+                        <div><label>Thu</label><input type="text" id="shift_Thu" placeholder="09:30"></div>
+                        <div><label>Fri</label><input type="text" id="shift_Fri" placeholder="09:30"></div>
+                        <div><label>Sat</label><input type="text" id="shift_Sat" placeholder="09:30"></div>
+                        <div><label>Sun</label><input type="text" id="shift_Sun" placeholder="OFF"></div>
+                    </div>
+                    <button class="action-btn btn-blue" onclick="saveShifts()">💾 Save Shift Timings</button>
                 </div>
-                <button class="btn-blue" onclick="saveShift()" style="margin-top:15px;">💾 Save Weekly Schedule</button>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="card col">
-                <h3>⚙️ System Preferences</h3>
-                <label>Company Name</label>
-                <input type="text" id="companyName" placeholder="e.g. emPower Tech">
-                <button class="btn-green" onclick="saveCompanyInfo()" style="margin-top:10px; width:auto;">Update</button>
-                <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
-                <label>Public Registration</label>
-                <button id="signupToggleBtn" class="btn-toggle inactive" onclick="toggleSignups()">🚫 Disabled</button>
             </div>
 
-            <div class="card col">
-                <h3>🔐 Security</h3>
-                <label>New Password</label>
-                <input type="password" id="newPass" placeholder="New password">
-                <label>Confirm Password</label>
-                <input type="password" id="confirmPass" placeholder="Confirm password">
-                <button class="btn-green" onclick="updatePassword()">Update Password</button>
+            <div class="grid-row">
+                
+                <div class="card card-system">
+                    <h3>⚙️ System Preferences</h3>
+                    <label>Company Name</label>
+                    <input type="text" id="companyName" value="Synod Bioscience">
+                    
+                    <button class="action-btn btn-green" onclick="alert('Company Name Updated!')">Update Info</button>
+
+                    <label style="margin-top:25px;">Public Registration</label>
+                    <button class="action-btn btn-red" onclick="toggleReg()">🚫 Disable New Signups</button>
+                </div>
+
+                <div class="card card-security">
+                    <h3>🔐 Admin Security</h3>
+                    <label>New Password</label>
+                    <input type="password" id="newPass" placeholder="New password">
+                    
+                    <label>Confirm Password</label>
+                    <input type="password" id="confirmPass" placeholder="Confirm password">
+                    
+                    <button class="action-btn btn-green" onclick="changeAdminPass()">Update Password</button>
+                </div>
+
             </div>
-        </div>
 
-        <div class="card">
-            <h3>👥 All Users (Roles & Access)</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Role</th>
-                        <th>Status</th>
-                        <th>Role Action</th>
-                        <th>Account Action</th>
-                    </tr>
-                </thead>
-                <tbody id="userTable">
-                    <tr><td colspan="6">Loading...</td></tr>
-                </tbody>
-            </table>
-        </div>
+            <div class="card card-users">
+                <h3>👥 Active Users & Roles</h3>
+                <p style="color:#666; font-size:13px; margin-bottom:15px;">
+                    Use the controls below to manage access or disable accounts instantly.
+                </p>
+                
+                <div id="usersList" style="max-height: 400px; overflow-y: auto; border:1px solid #f1f1f1; border-radius:6px;">
+                    <div style="text-align:center; padding:20px; color:#999;">Loading users...</div>
+                </div>
+            </div>
 
+        </div>
     </div>
-</div>
 
-<script>
-// --- ⚠️ PASTE YOUR NEW API KEY BELOW ⚠️ ---
-const firebaseConfig = {
-  apiKey: "AIzaSyBzdM77WwTSkxvF0lsxf2WLNLhjuGyNvQQ",
-  authDomain: "attendancewebapp-ef02a.firebaseapp.com",
-  projectId: "attendancewebapp-ef02a",
-  storageBucket: "attendancewebapp-ef02a.firebasestorage.app",
-  messagingSenderId: "734213881030",
-  appId: "1:734213881030:web:bfdcee5a2ff293f87e6bc7"
-};
+    <script>
+        // --- 1. CONFIG ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBzdM77WwTSkxvF0lsxf2WLNLhjuGyNvQQ",
+            authDomain: "attendancewebapp-ef02a.firebaseapp.com",
+            projectId: "attendancewebapp-ef02a",
+            storageBucket: "attendancewebapp-ef02a.firebasestorage.app",
+            messagingSenderId: "734213881030",
+            appId: "1:734213881030:web:bfdcee5a2ff293f87e6bc7"
+        };
 
-if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
-let currentUserEmail = "";
-let signupEnabled = false;
-
-auth.onAuthStateChanged(user => {
-  if (user) {
-      currentUserEmail = user.email;
-      document.getElementById("adminEmail").innerText = user.email;
-      loadSystemSettings();
-      loadUsers();
-  } else {
-      window.location.replace("login.jsp");
-  }
-});
-
-/* --- USER & SHIFT MANAGEMENT --- */
-function loadUsers() {
-    db.collection("users").get().then(snap => {
-        const pendingTb = document.getElementById("pendingTable");
-        const userTb = document.getElementById("userTable");
-        const shiftSelect = document.getElementById("shiftUserSelect");
-        const pendingSec = document.getElementById("pendingSection");
-        
-        pendingTb.innerHTML = "";
-        userTb.innerHTML = "";
-        shiftSelect.innerHTML = '<option value="">-- Select Employee to Edit Shift --</option>';
-        
-        let pendingCount = 0;
-
-        snap.forEach(doc => {
-            const u = doc.data();
-            const email = u.email; // Using email as the ID for consistency
-            const status = u.status || "Approved"; 
-            const isMe = email === currentUserEmail;
-
-            // 1. FILL SHIFT DROPDOWN (Employees Only)
-            if(u.role !== 'admin') {
-                let opt = document.createElement("option");
-                opt.value = email;
-                opt.text = (u.fullName || "User") + " (" + email + ")";
-                shiftSelect.appendChild(opt);
-            }
-
-            // 2. PENDING REQUESTS TABLE
-            if (status === 'Pending') {
-                pendingCount++;
-                let row = "<tr>";
-                row += "<td>" + u.fullName + "</td>";
-                row += "<td>" + u.email + "</td>";
-                row += "<td>" + (u.contact || '-') + "</td>";
-                row += "<td>";
-                row += "<button class='btn-green' onclick='updateStatus(\"" + email + "\", \"Approved\")'>✅ Approve</button> ";
-                row += "<button class='btn-disable' onclick='updateStatus(\"" + email + "\", \"Disabled\")'>🚫 Reject</button>";
-                row += "</td></tr>";
-                pendingTb.innerHTML += row;
-            }
-
-            // 3. MAIN USER TABLE
-            let roleHtml = isMe ? "<b>ADMIN</b>" : "<select id='role_" + email.replace(/[@.]/g, '') + "' style='padding:5px;'>" +
-                "<option value='employee' " + (u.role==='employee'?'selected':'') + ">Employee</option>" +
-                "<option value='admin' " + (u.role==='admin'?'selected':'') + ">Admin</option>" +
-                "</select>";
-            
-            let roleBtn = isMe ? "-" : "<button class='btn-save' onclick='updateRole(\"" + email + "\")'>Save Role</button>";
-
-            let actionBtn = "";
-            if(isMe) {
-                actionBtn = "-";
-            } else if (status === 'Disabled') {
-                actionBtn = "<button class='btn-enable' onclick='updateStatus(\"" + email + "\", \"Approved\")'>🔄 Re-Enable</button>";
+        // --- 2. AUTH CHECK ---
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                document.getElementById("adminEmail").innerText = user.email;
+                loadEmployeeList();
+                document.getElementById("loadingOverlay").style.display = "none";
             } else {
-                actionBtn = "<button class='btn-disable' onclick='updateStatus(\"" + email + "\", \"Disabled\")'>🚫 Disable</button>";
+                window.location.replace("login.jsp");
             }
-
-            let uRow = "<tr>";
-            uRow += "<td>" + u.fullName + "</td>";
-            uRow += "<td>" + u.email + "</td>";
-            uRow += "<td>" + roleHtml + "</td>";
-            uRow += "<td><span class='badge bg-" + status + "'>" + status + "</span></td>";
-            uRow += "<td>" + roleBtn + "</td>";
-            uRow += "<td>" + actionBtn + "</td>";
-            uRow += "</tr>";
-            
-            userTb.innerHTML += uRow;
         });
 
-        if(pendingCount > 0) pendingSec.style.display = "block";
-        else pendingSec.style.display = "none";
-        
-        document.getElementById("loadingOverlay").style.display = "none";
-    });
-}
+        // --- 3. LOAD USERS ---
+        function loadEmployeeList() {
+            const select = document.getElementById("shiftEmpSelect");
+            const listDiv = document.getElementById("usersList");
+            
+            listDiv.innerHTML = "";
+            select.innerHTML = '<option value="">-- Select Employee to Edit Shift --</option>';
 
-function updateStatus(email, newStatus) {
-    if(newStatus === 'Disabled' && !confirm("Block this user from logging in?")) return;
-    db.collection("users").doc(email).update({ status: newStatus }).then(() => {
-        alert("User updated to: " + newStatus);
-        loadUsers();
-    });
-}
+            db.collection("users").get().then(snap => {
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    const email = doc.id;
+                    const role = data.role || "employee";
+                    const status = data.status || "Active"; // Default to Active
+                    
+                    // 1. Shift Dropdown (Skip admins if desired)
+                    if(role !== 'admin') {
+                        const opt = document.createElement("option");
+                        opt.value = email;
+                        opt.innerText = data.fullName + " (" + email + ")";
+                        select.appendChild(opt);
+                    }
 
-function updateRole(email) {
-    // Sanitize ID selector because IDs can't have dots or @ easily in some browsers
-    const selId = "role_" + email.replace(/[@.]/g, '');
-    const newRole = document.getElementById(selId).value;
-    
-    db.collection("users").doc(email).update({ role: newRole }).then(() => {
-        alert("Role Updated!");
-        loadUsers();
-    });
-}
+                    // 2. User List Item
+                    let isEmp = (role === 'employee') ? 'selected' : '';
+                    let isAdmin = (role === 'admin') ? 'selected' : '';
 
-/* --- SHIFT LOGIC --- */
-function loadUserShift() {
-    const email = document.getElementById("shiftUserSelect").value;
-    const editor = document.getElementById("shiftEditor");
-    if(!email) { editor.style.display = "none"; return; }
-    editor.style.display = "block";
-    db.collection("users").doc(email).get().then(doc => {
-        const data = doc.data();
-        const s = data.shiftTimings || {};
-        document.getElementById("t_Mon").value = s.Mon || "09:30";
-        document.getElementById("t_Tue").value = s.Tue || "09:30";
-        document.getElementById("t_Wed").value = s.Wed || "09:30";
-        document.getElementById("t_Thu").value = s.Thu || "09:30";
-        document.getElementById("t_Fri").value = s.Fri || "09:30";
-        document.getElementById("t_Sat").value = s.Sat || "09:30";
-        document.getElementById("t_Sun").value = s.Sun || "OFF";
-    });
-}
+                    // Role Select
+                    let roleSelect = "<select onchange=\"updateRole('" + email + "', this.value)\" class='role-select'>";
+                    roleSelect += "<option value='employee' " + isEmp + ">Employee</option>";
+                    roleSelect += "<option value='admin' " + isAdmin + ">Admin</option>";
+                    roleSelect += "</select>";
 
-function saveShift() {
-    const email = document.getElementById("shiftUserSelect").value;
-    if(!email) return;
-    const timings = {
-        Mon: document.getElementById("t_Mon").value,
-        Tue: document.getElementById("t_Tue").value,
-        Wed: document.getElementById("t_Wed").value,
-        Thu: document.getElementById("t_Thu").value,
-        Fri: document.getElementById("t_Fri").value,
-        Sat: document.getElementById("t_Sat").value,
-        Sun: document.getElementById("t_Sun").value
-    };
-    db.collection("users").doc(email).update({ shiftTimings: timings })
-      .then(() => alert("✅ Weekly Schedule Updated for " + email))
-      .catch(e => alert("Error: " + e.message));
-}
+                    // Disable Button Logic
+                    let btnHtml = "";
+                    if(status === 'Disabled') {
+                        btnHtml = "<button class='btn-toggle btn-enable' onclick=\"toggleUserStatus('" + email + "', 'Active')\">Enable</button>";
+                    } else {
+                        btnHtml = "<button class='btn-toggle btn-disable' onclick=\"toggleUserStatus('" + email + "', 'Disabled')\">Disable</button>";
+                    }
 
-/* --- SYSTEM SETTINGS --- */
-function loadSystemSettings() {
-    db.collection("settings").doc("system").onSnapshot(doc => {
-        if(doc.exists) {
-            const data = doc.data();
-            if(data.companyName) document.getElementById("companyName").value = data.companyName;
-            signupEnabled = data.allowSignups || false;
-            updateToggleUI();
+                    const row = document.createElement("div");
+                    row.className = "user-list-item";
+                    row.innerHTML = 
+                        "<div class='user-info'><b>" + (data.fullName || "Unknown") + "</b><span>" + email + "</span></div>" +
+                        "<div class='user-actions'>" + roleSelect + btnHtml + "</div>";
+                    
+                    listDiv.appendChild(row);
+                });
+            });
         }
-    });
-}
-function saveCompanyInfo() {
-    const name = document.getElementById("companyName").value;
-    db.collection("settings").doc("system").set({ companyName: name }, { merge: true }).then(() => alert("✅ Saved!"));
-}
-function toggleSignups() {
-    signupEnabled = !signupEnabled;
-    db.collection("settings").doc("system").set({ allowSignups: signupEnabled }, { merge: true }).then(() => updateToggleUI());
-}
-function updateToggleUI() {
-    const btn = document.getElementById("signupToggleBtn");
-    if(signupEnabled) { btn.innerText = "✅ Signups Enabled"; btn.className = "btn-toggle active"; }
-    else { btn.innerText = "🚫 Disabled"; btn.className = "btn-toggle inactive"; }
-}
 
-/* --- SECURITY --- */
-function updatePassword() {
-    const p1 = document.getElementById("newPass").value;
-    const p2 = document.getElementById("confirmPass").value;
-    if(p1.length < 6 || p1 !== p2) { alert("Invalid password."); return; }
-    auth.currentUser.updatePassword(p1).then(() => { alert("Updated! Login again."); logout(); })
-    .catch(e => { if(e.code==='auth/requires-recent-login'){ alert("Session old. Logging out."); logout(); } else alert(e.message); });
-}
+        // --- 4. UPDATE ROLE ---
+        function updateRole(email, newRole) {
+            if(!confirm("Change " + email + " to " + newRole.toUpperCase() + "?")) {
+                loadEmployeeList(); 
+                return;
+            }
 
-function logout(){ auth.signOut().then(() => location.href = "login.jsp"); }
-</script>
+            db.collection("users").doc(email).update({
+                role: newRole
+            }).then(() => {
+                alert("✅ Role Updated!");
+            }).catch(e => {
+                alert("Error: " + e.message);
+                loadEmployeeList();
+            });
+        }
+
+        // --- 5. TOGGLE STATUS (DISABLE/ENABLE) ---
+        function toggleUserStatus(email, newStatus) {
+            let action = (newStatus === 'Active') ? "ENABLE" : "DISABLE";
+            if(!confirm("Are you sure you want to " + action + " this user account?")) return;
+
+            db.collection("users").doc(email).update({
+                status: newStatus
+            }).then(() => {
+                alert("✅ Account " + (newStatus === 'Active' ? "Enabled" : "Disabled"));
+                loadEmployeeList(); // Refresh list to update button color
+            }).catch(e => alert("Error: " + e.message));
+        }
+
+        // --- 6. SHIFT MGMT ---
+        function loadShifts() {
+            const email = document.getElementById("shiftEmpSelect").value;
+            const container = document.getElementById("shiftInputs");
+            
+            if(!email) {
+                container.style.display = "none";
+                return;
+            }
+
+            container.style.display = "block";
+            
+            db.collection("users").doc(email).get().then(doc => {
+                if(doc.exists) {
+                    const s = doc.data().shiftTimings || {};
+                    document.getElementById("shift_Mon").value = s.Mon || "09:30";
+                    document.getElementById("shift_Tue").value = s.Tue || "09:30";
+                    document.getElementById("shift_Wed").value = s.Wed || "09:30";
+                    document.getElementById("shift_Thu").value = s.Thu || "09:30";
+                    document.getElementById("shift_Fri").value = s.Fri || "09:30";
+                    document.getElementById("shift_Sat").value = s.Sat || "09:30";
+                    document.getElementById("shift_Sun").value = s.Sun || "OFF";
+                }
+            });
+        }
+
+        function saveShifts() {
+            const email = document.getElementById("shiftEmpSelect").value;
+            if(!email) return;
+
+            const shifts = {
+                Mon: document.getElementById("shift_Mon").value,
+                Tue: document.getElementById("shift_Tue").value,
+                Wed: document.getElementById("shift_Wed").value,
+                Thu: document.getElementById("shift_Thu").value,
+                Fri: document.getElementById("shift_Fri").value,
+                Sat: document.getElementById("shift_Sat").value,
+                Sun: document.getElementById("shift_Sun").value
+            };
+
+            db.collection("users").doc(email).update({
+                shiftTimings: shifts
+            }).then(() => {
+                alert("✅ Shift Timings Updated for " + email);
+            });
+        }
+
+        // --- 7. ADMIN SECURITY ---
+        function changeAdminPass() {
+            const p1 = document.getElementById("newPass").value;
+            const p2 = document.getElementById("confirmPass").value;
+            
+            if(p1.length < 6) { alert("Password too short."); return; }
+            if(p1 !== p2) { alert("Passwords do not match."); return; }
+
+            auth.currentUser.updatePassword(p1).then(() => {
+                alert("Password Updated! Please login again.");
+                logout();
+            }).catch(e => alert("Error: " + e.message));
+        }
+
+        function toggleReg() {
+            alert("This feature requires backend configuration.");
+        }
+
+        function logout(){
+            auth.signOut().then(() => window.location.href = "index.html");
+        }
+        
+        function toggleSidebar() {
+            document.getElementById("sidebar").classList.toggle("open");
+        }
+    </script>
 </body>
 </html>

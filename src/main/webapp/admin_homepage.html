@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Synod Bioscience</title>
+    
+    <style>
+        /* --- 1. RESET & VARS --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        :root {
+            --primary-navy: #1a3b6e;
+            --primary-green: #2ecc71;
+            --bg-light: #f4f6f9;
+            --text-dark: #333;
+            --text-grey: #666;
+            --sidebar-width: 260px;
+        }
+
+        body { display: flex; height: 100vh; background-color: var(--bg-light); overflow: hidden; }
+
+        /* --- 2. SIDEBAR --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--primary-navy);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            transition: width 0.3s;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            background-color: rgba(0,0,0,0.1);
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* LOGO IN SIDEBAR */
+        .sidebar-logo {
+            max-width: 140px;
+            height: auto;
+            margin-bottom: 10px;
+            filter: brightness(0) invert(1); /* Makes the logo white for dark bg */
+        }
+        
+        .sidebar-brand { font-size: 14px; opacity: 0.8; letter-spacing: 1px; text-transform: uppercase; }
+
+        .nav-menu {
+            list-style: none;
+            padding: 20px 0;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            padding: 15px 25px;
+            color: #bdc3c7;
+            text-decoration: none;
+            font-size: 15px;
+            transition: all 0.3s;
+            border-left: 4px solid transparent;
+        }
+
+        .nav-item a:hover, .nav-item a.active {
+            background-color: rgba(255,255,255,0.05);
+            color: white;
+            border-left-color: var(--primary-green);
+        }
+
+        .nav-icon { margin-right: 15px; font-size: 18px; width: 25px; text-align: center; }
+
+        /* Logout Button */
+        .sidebar-footer { padding: 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+        .btn-logout {
+            width: 100%;
+            padding: 12px;
+            background-color: rgba(231, 76, 60, 0.8);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .btn-logout:hover { background-color: #c0392b; }
+
+        /* --- 3. MAIN CONTENT --- */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        /* Top Bar */
+        .topbar {
+            background: white;
+            height: 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            position: sticky; top: 0; z-index: 100;
+        }
+
+        .page-title { font-size: 20px; font-weight: bold; color: var(--primary-navy); }
+        .user-profile { font-size: 14px; color: var(--text-grey); display: flex; align-items: center; gap: 10px; }
+        .user-avatar { width: 35px; height: 35px; background: #e0e0e0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: var(--primary-navy); }
+
+        /* Dashboard Grid */
+        .dashboard-container { padding: 30px; max-width: 1200px; margin: 0 auto; width: 100%; }
+
+        .welcome-banner {
+            background: linear-gradient(135deg, var(--primary-navy) 0%, #2c3e50 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(26, 59, 110, 0.2);
+        }
+        .welcome-banner h2 { margin-bottom: 10px; font-size: 24px; }
+        .welcome-banner p { opacity: 0.8; }
+
+        .grid-menu {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .menu-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+            color: inherit;
+            border-top: 4px solid transparent;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 180px;
+        }
+
+        .menu-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+        }
+
+        .card-icon-large { font-size: 40px; margin-bottom: 15px; }
+        .card-title { font-size: 18px; font-weight: bold; color: var(--text-dark); margin-bottom: 5px; }
+        .card-desc { font-size: 13px; color: var(--text-grey); line-height: 1.4; }
+        
+        /* Specific Card Colors */
+        .card-live { border-top-color: #3498db; }
+        .card-live .card-icon-large { color: #3498db; }
+        
+        .card-users { border-top-color: #9b59b6; }
+        .card-users .card-icon-large { color: #9b59b6; }
+
+        .card-tasks { border-top-color: #e67e22; }
+        .card-tasks .card-icon-large { color: #e67e22; }
+
+        .card-reports { border-top-color: #2ecc71; }
+        .card-reports .card-icon-large { color: #2ecc71; }
+
+        .card-finance { border-top-color: #f1c40f; }
+        .card-finance .card-icon-large { color: #f1c40f; }
+
+        .card-settings { border-top-color: #7f8c8d; }
+        .card-settings .card-icon-large { color: #7f8c8d; }
+
+        /* Loader */
+        #loadingOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; z-index: 9999;
+            display: flex; justify-content: center; align-items: center;
+            flex-direction: column; color: #333;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { position: absolute; left: -260px; height: 100%; z-index: 200; }
+            .sidebar.open { left: 0; }
+            .main-content { margin-left: 0; }
+            .toggle-btn { display: block; margin-right: 15px; cursor: pointer; font-size: 24px; }
+        }
+        @media (min-width: 901px) { .toggle-btn { display: none; } }
+    </style>
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+    <div id="loadingOverlay">
+        <div style="font-size: 40px; margin-bottom: 20px;">🛡️</div>
+        <h3>Verifying Admin Access...</h3>
+    </div>
+
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="synod_logo.png" alt="Synod Logo" class="sidebar-logo">
+            <div class="sidebar-brand">ADMIN PORTAL</div>
+        </div>
+
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="#" class="active"><span class="nav-icon">🏠</span> Home</a>
+            </li>
+            <li class="nav-item">
+                <a href="admin_dashboard.jsp"><span class="nav-icon">📊</span> Live Dashboard</a>
+            </li>
+            <li class="nav-item">
+                <a href="manage_employees.jsp"><span class="nav-icon">👥</span> Employees</a>
+            </li>
+            <li class="nav-item">
+                <a href="admin_task_monitoring.jsp"><span class="nav-icon">📝</span> Tasks</a>
+            </li>
+            <li class="nav-item">
+                <a href="reports.jsp"><span class="nav-icon">📅</span> Attendance</a>
+            </li>
+            <li class="nav-item">
+                <a href="admin_expenses.jsp"><span class="nav-icon">💸</span> Expenses</a>
+            </li>
+             <li class="nav-item">
+                <a href="payroll.jsp" class="active"><span class="nav-icon">💰</span> Payroll</a>
+            </li>
+            <li class="nav-item">
+                <a href="admin_settings.jsp"><span class="nav-icon">⚙️</span> Settings</a>
+            </li>
+        </ul>
+
+        <div class="sidebar-footer">
+            <button onclick="logout()" class="btn-logout">
+                <span>🚪</span> Sign Out
+            </button>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <header class="topbar">
+            <div style="display:flex; align-items:center;">
+                <div class="toggle-btn" onclick="toggleSidebar()">☰</div>
+                <div class="page-title">Administration Hub</div>
+            </div>
+            <div class="user-profile">
+                <span id="adminEmail">Loading...</span>
+                <div class="user-avatar">A</div>
+            </div>
+        </header>
+
+        <div class="dashboard-container">
+            
+            <div class="welcome-banner">
+                <h2 id="welcomeText">Welcome Back, Admin</h2>
+                <p>Here is your centralized control panel. Select a module to begin managing your workforce.</p>
+            </div>
+
+            <div class="grid-menu">
+                
+                <a href="admin_dashboard.jsp" class="menu-card card-live">
+                    <div>
+                        <div class="card-icon-large">📊</div>
+                        <div class="card-title">Live Dashboard</div>
+                        <div class="card-desc">View real-time attendance feeds, daily stats, and quick overview graphs.</div>
+                    </div>
+                    <div style="text-align:right; font-weight:bold; color:#3498db;">Open &rarr;</div>
+                </a>
+
+                <a href="manage_employees.jsp" class="menu-card card-users">
+                    <div>
+                        <div class="card-icon-large">👥</div>
+                        <div class="card-title">Employee Directory</div>
+                        <div class="card-desc">Add new users, approve registrations, and manage account roles.</div>
+                    </div>
+                    <div style="text-align:right; font-weight:bold; color:#9b59b6;">Manage &rarr;</div>
+                </a>
+
+                <a href="admin_task_monitoring.jsp" class="menu-card card-tasks">
+                    <div>
+                        <div class="card-icon-large">📝</div>
+                        <div class="card-title">Task Monitor</div>
+                        <div class="card-desc">Assign projects, track progress, and communicate with teams.</div>
+                    </div>
+                    <div style="text-align:right; font-weight:bold; color:#e67e22;">View Tasks &rarr;</div>
+                </a>
+
+                <a href="admin_attendance.jsp" class="menu-card card-reports">
+                    <div>
+                        <div class="card-icon-large">📅</div>
+                        <div class="card-title">Attendance Reports</div>
+                        <div class="card-desc">Access detailed attendance logs, monthly reports, and Excel exports.</div>
+                    </div>
+                    <div style="text-align:right; font-weight:bold; color:#2ecc71;">View Reports &rarr;</div>
+                </a>
+
+                <a href="admin_expenses.jsp" class="menu-card card-finance">
+                    <div>
+                        <div class="card-icon-large">💰</div>
+                        <div class="card-title">Finance & Expenses</div>
+                        <div class="card-desc">Approve reimbursement claims and manage payroll calculations.</div>
+                    </div>
+                    <div style="text-align:right; font-weight:bold; color:#f1c40f;">Approvals &rarr;</div>
+                </a>
+
+                <a href="admin_settings.jsp" class="menu-card card-settings">
+                    <div>
+                        <div class="card-icon-large">⚙️</div>
+                        <div class="card-title">System Settings</div>
+                        <div class="card-desc">Configure company details, shifts, and global preferences.</div>
+                    </div>
+                    <div style="text-align:right; font-weight:bold; color:#7f8c8d;">Configure &rarr;</div>
+                </a>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. FIREBASE CONFIG ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBzdM77WwTSkxvF0lsxf2WLNLhjuGyNvQQ",
+            authDomain: "attendancewebapp-ef02a.firebaseapp.com",
+            projectId: "attendancewebapp-ef02a",
+            storageBucket: "attendancewebapp-ef02a.firebasestorage.app",
+            messagingSenderId: "734213881030",
+            appId: "1:734213881030:web:bfdcee5a2ff293f87e6bc7"
+        };
+        
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // --- 2. AUTH CHECK ---
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // Verify Admin Role in Firestore
+                db.collection("users").doc(user.email).get().then(doc => {
+                    if (doc.exists && doc.data().role === 'admin') {
+                        // Success: Show Dashboard
+                        document.getElementById("adminEmail").innerText = user.email;
+                        document.getElementById("loadingOverlay").style.display = "none";
+                    } else {
+                        // Not an admin
+                        alert("Access Denied: You do not have administrator privileges.");
+                        window.location.replace("index.html");
+                    }
+                }).catch(err => {
+                    console.error("DB Error", err);
+                    // Fallback: If DB read fails (e.g. permission), let them stay or kick?
+                    // Safer to kick or show generic UI. We'll hide loader for now.
+                    document.getElementById("loadingOverlay").style.display = "none";
+                });
+            } else {
+                // Not logged in
+                window.location.replace("index.html");
+            }
+        });
+
+        // --- 3. UTILS ---
+        function logout() {
+            auth.signOut().then(() => window.location.href = "index.html");
+        }
+
+        function toggleSidebar() {
+            document.getElementById("sidebar").classList.toggle("open");
+        }
+    </script>
+</body>
+</html>
