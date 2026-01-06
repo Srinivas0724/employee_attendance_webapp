@@ -328,7 +328,7 @@
                 document.getElementById("loadingOverlay").style.display = "none";
                 loadAllTasks();
             } else {
-                window.location.replace("login.jsp");
+                window.location.replace("index.html");
             }
         });
 

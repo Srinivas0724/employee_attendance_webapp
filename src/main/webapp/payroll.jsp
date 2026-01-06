@@ -352,7 +352,7 @@
                 loadPayrollTable();
                 document.getElementById("loadingOverlay").style.display = "none";
             } else {
-                window.location.replace("login.jsp");
+                window.location.replace("index.html");
             }
         });
 

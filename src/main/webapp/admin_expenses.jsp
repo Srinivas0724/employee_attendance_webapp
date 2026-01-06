@@ -290,7 +290,7 @@
                 document.getElementById("adminEmail").innerText = user.email;
                 loadExpenses();
             } else {
-                window.location.replace("login.jsp");
+                window.location.replace("index.html");
             }
         });
 

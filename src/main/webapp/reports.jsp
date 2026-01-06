@@ -334,7 +334,7 @@
                 document.getElementById("adminEmail").innerText = user.email;
                 fetchUsersAndReport();
             } else {
-                window.location.replace("login.jsp");
+                window.location.replace("index.html");
             }
         });
 
