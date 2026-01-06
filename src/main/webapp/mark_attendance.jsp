@@ -238,7 +238,7 @@ function processAttendance(type, lat, lng) {
     });
 }
 
-function logout(){ auth.signOut().then(() => window.location.replace("login.jsp")); }
+function logout(){ auth.signOut().then(() => window.location.replace("index.html")); }
 </script>
 </body>
 </html>

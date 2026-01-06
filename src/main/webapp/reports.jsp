@@ -528,7 +528,7 @@
             XLSX.writeFile(wb, "Attendance_Report.xlsx");
         }
 
-        function logout(){ auth.signOut().then(() => location.href = "login.jsp"); }
+        function logout(){ auth.signOut().then(() => location.href = "index.html"); }
         
         function toggleSidebar() {
             document.getElementById("sidebar").classList.toggle("open");

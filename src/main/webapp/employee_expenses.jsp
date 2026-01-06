@@ -208,7 +208,7 @@ function loadExpenses(email){
       });
 }
 
-function logout(){ auth.signOut().then(() => location.href = "login.jsp"); }
+function logout(){ auth.signOut().then(() => location.href = "index.html"); }
 </script>
 </body>
 </html>

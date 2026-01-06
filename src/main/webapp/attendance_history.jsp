@@ -211,7 +211,7 @@ function closeModal() {
     document.getElementById("photoModal").style.display = "none";
 }
 
-function logout(){ auth.signOut().then(() => location.href = "login.jsp"); }
+function logout(){ auth.signOut().then(() => location.href = "index.html"); }
 </script>
 
 </body>

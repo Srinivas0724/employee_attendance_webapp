@@ -448,7 +448,7 @@ const firebaseConfig = {
         };
 
         function logout() {
-            auth.signOut().then(() => window.location.href = "login.jsp");
+            auth.signOut().then(() => window.location.href = "index.html");
         }
     </script>
 </body>

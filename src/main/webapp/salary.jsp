@@ -222,7 +222,7 @@ function fetchSalary() {
 
 function logout(){
     auth.signOut().then(() => {
-        window.location.href = "login.jsp";
+        window.location.href = "index.html";
     });
 }
 </script>
