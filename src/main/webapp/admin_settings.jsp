@@ -228,13 +228,13 @@
                 <a href="admin_task_monitoring.jsp"><span class="nav-icon">📝</span> Tasks</a>
             </li>
             <li class="nav-item">
-                <a href="admin_attendance.jsp"><span class="nav-icon">📅</span> Attendance</a>
+                <a href="reports.jsp"><span class="nav-icon">📅</span> Attendance</a>
             </li>
             <li class="nav-item">
                 <a href="admin_expenses.jsp"><span class="nav-icon">💸</span> Expenses</a>
             </li>
              <li class="nav-item">
-                <a href="payroll.jsp" class="active"><span class="nav-icon">💰</span> Payroll</a>
+                <a href="payroll.jsp"><span class="nav-icon">💰</span> Payroll</a>
             </li>
             <li class="nav-item">
                 <a href="admin_settings.jsp" class="active"><span class="nav-icon">⚙️</span> Settings</a>
@@ -342,14 +342,53 @@
 
         // --- 2. AUTH CHECK ---
         auth.onAuthStateChanged(user => {
-            if (user) {
-                document.getElementById("adminEmail").innerText = user.email;
-                loadEmployeeList();
-                document.getElementById("loadingOverlay").style.display = "none";
-            } else {
-                window.location.replace("index.html");
+    if (user) {
+        db.collection("users").doc(user.email).get().then(doc => {
+            if (doc.exists) {
+                const role = doc.data().role;
+                
+                // 1. CHECK ACCESS: Allow Admin OR Manager
+                if (role !== 'admin' && role !== 'manager') {
+                    window.location.href = "index.html"; // Kick out employees
+                    return;
+                }
+
+                // 2. LOAD USER INFO
+                if(document.getElementById("adminEmail")) {
+                     document.getElementById("adminEmail").innerText = user.email;
+                }
+                
+                // 3. IF MANAGER -> HIDE RESTRICTED SIDEBAR LINKS
+                if (role === 'manager') {
+                    // Change Brand Name
+                    const brand = document.querySelector('.sidebar-brand');
+                    if(brand) brand.innerText = "MANAGER PORTAL";
+
+                    // Hide Expenses Link (Find by href)
+                    const expLink = document.querySelector('a[href="admin_expenses.jsp"]');
+                    if(expLink && expLink.parentElement) expLink.parentElement.style.display = 'none';
+
+                    // Hide Payroll Link
+                    const payLink = document.querySelector('a[href="payroll.jsp"]');
+                    if(payLink && payLink.parentElement) payLink.parentElement.style.display = 'none';
+                }
+
+                // 4. LOAD PAGE DATA (Call your page's load function)
+                // Note: Ensure the specific page's load function exists (e.g., loadEmployees(), loadTasks())
+                // You might need to check which page you are on, or just let the existing code run below this block.
+                if(typeof loadEmployeeList === "function") loadEmployeeList();
+                if(typeof loadTasks === "function") loadTasks();
+                if(typeof loadAttendance === "function") loadAttendance();
+                
+                // Hide Loader
+                const loader = document.getElementById("loadingOverlay");
+                if(loader) loader.style.display = "none";
             }
         });
+    } else {
+        window.location.replace("index.html");
+    }
+});
 
         // --- 3. LOAD USERS ---
         function loadEmployeeList() {
@@ -382,6 +421,7 @@
                     let roleSelect = "<select onchange=\"updateRole('" + email + "', this.value)\" class='role-select'>";
                     roleSelect += "<option value='employee' " + isEmp + ">Employee</option>";
                     roleSelect += "<option value='admin' " + isAdmin + ">Admin</option>";
+                    roleSelect += "<option value='manager' " + (role === 'manager' ? 'selected' : '') + ">Manager</option>"; 
                     roleSelect += "</select>";
 
                     // Disable Button Logic

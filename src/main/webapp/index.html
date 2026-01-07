@@ -215,7 +215,7 @@
                 </div>
 
                 <div class="tabs">
-                    <button class="tab-btn active" id="tab-employee" onclick="switchRole('employee')">Employee</button>
+                    <button class="tab-btn active" id="tab-employee" onclick="switchRole('employee')">Employee / Manager</button>
                     <button class="tab-btn" id="tab-admin" onclick="switchRole('admin')">Admin</button>
                 </div>
 
@@ -333,15 +333,22 @@
                     }
 
                     // 2. Validate Selected Tab vs Actual Role
-                    // This ensures an Employee can't login via the Admin tab
+                    // NOTE: 'admin' tab allows ONLY admins. 'employee' tab allows employees OR managers.
                     if (currentRole === 'admin' && data.role !== 'admin') {
                         throw new Error("Access Denied: You are not an Admin.");
                     }
 
-                    // 3. Redirect
+                    // 3. Redirect Logic
                     if (data.role === 'admin') {
+                        // Admin Dashboard
                         window.location.replace("admin_homepage.html"); 
-                    } else {
+                    } 
+                    else if (data.role === 'manager') {
+                        // Manager Dashboard
+                        window.location.replace("manager_dashboard.jsp"); 
+                    } 
+                    else {
+                        // Regular Employee Dashboard
                         window.location.replace("mark_attendance.jsp"); 
                     }
                 } else {

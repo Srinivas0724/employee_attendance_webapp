@@ -226,7 +226,7 @@
 
         <ul class="nav-menu">
             <li class="nav-item">
-                <a href="admin_homepage.html"><span class="nav-icon">🏠</span> Home</a>
+                <a href="admin_homepage.html" class="active"><span class="nav-icon">🏠</span> Home</a>
             </li>
             <li class="nav-item">
                 <a href="admin_dashboard.jsp" class="active"><span class="nav-icon">📊</span> Live Dashboard</a>
@@ -244,7 +244,7 @@
                 <a href="admin_expenses.jsp"><span class="nav-icon">💸</span> Expenses</a>
             </li>
              <li class="nav-item">
-                <a href="payroll.jsp" class="active"><span class="nav-icon">💰</span> Payroll</a>
+                <a href="payroll.jsp"><span class="nav-icon">💰</span> Payroll</a>
             </li>
             <li class="nav-item">
                 <a href="admin_settings.jsp"><span class="nav-icon">⚙️</span> Settings</a>

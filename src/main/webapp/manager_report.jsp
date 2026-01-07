@@ -8,7 +8,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Attendance Reports - Synod Bioscience</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Report - Manager Portal</title>
     
     <style>
         /* --- 1. RESET & VARS --- */
@@ -16,11 +17,13 @@
         
         :root {
             --primary-navy: #1a3b6e;
+            --primary-dark: #122b52;
             --primary-green: #2ecc71;
-            --bg-light: #f4f6f9;
-            --text-dark: #333;
-            --text-grey: #666;
-            --sidebar-width: 260px;
+            --bg-light: #f0f2f5;
+            --text-dark: #2c3e50;
+            --text-grey: #7f8c8d;
+            --card-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            --sidebar-width: 280px;
         }
 
         body { display: flex; height: 100vh; background-color: var(--bg-light); overflow: hidden; }
@@ -28,70 +31,89 @@
         /* --- 2. SIDEBAR --- */
         .sidebar {
             width: var(--sidebar-width);
-            background-color: var(--primary-navy);
+            background: linear-gradient(180deg, var(--primary-navy) 0%, var(--primary-dark) 100%);
             color: white;
             display: flex;
             flex-direction: column;
-            transition: width 0.3s;
+            transition: all 0.3s ease;
             flex-shrink: 0;
+            z-index: 1000;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.1);
         }
 
         .sidebar-header {
-            padding: 20px;
-            background-color: rgba(0,0,0,0.1);
+            padding: 30px 20px;
             text-align: center;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            background: rgba(0,0,0,0.1);
         }
 
         .sidebar-logo {
-            max-width: 140px;
+            max-width: 130px;
             height: auto;
-            margin-bottom: 10px;
-            filter: brightness(0) invert(1);
+            margin-bottom: 15px;
+            filter: brightness(0) invert(1) drop-shadow(0 4px 6px rgba(0,0,0,0.2));
         }
         
-        .sidebar-brand { font-size: 14px; opacity: 0.8; letter-spacing: 1px; text-transform: uppercase; }
+        .sidebar-brand { 
+            font-size: 13px; 
+            opacity: 0.9; 
+            letter-spacing: 1.5px; 
+            text-transform: uppercase; 
+            font-weight: 600;
+        }
 
         .nav-menu {
             list-style: none;
-            padding: 20px 0;
+            padding: 20px 15px;
             flex: 1;
             overflow-y: auto;
         }
 
+        .nav-item { margin-bottom: 8px; }
+
         .nav-item a {
             display: flex;
             align-items: center;
-            padding: 15px 25px;
+            padding: 14px 20px;
             color: #bdc3c7;
             text-decoration: none;
             font-size: 15px;
-            transition: all 0.3s;
-            border-left: 4px solid transparent;
+            font-weight: 500;
+            border-radius: 10px;
+            transition: all 0.2s ease;
         }
 
-        .nav-item a:hover, .nav-item a.active {
-            background-color: rgba(255,255,255,0.05);
+        .nav-item a:hover {
+            background-color: rgba(255,255,255,0.08);
             color: white;
-            border-left-color: var(--primary-green);
+            transform: translateX(5px);
+        }
+
+        .nav-item a.active {
+            background-color: var(--primary-green);
+            color: white;
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4);
         }
 
         .nav-icon { margin-right: 15px; font-size: 18px; width: 25px; text-align: center; }
 
-        .sidebar-footer { padding: 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+        .sidebar-footer { padding: 25px; border-top: 1px solid rgba(255,255,255,0.05); }
         .btn-logout {
             width: 100%;
-            padding: 12px;
-            background-color: rgba(231, 76, 60, 0.8);
+            padding: 14px;
+            background-color: rgba(231, 76, 60, 0.9);
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 10px;
             cursor: pointer;
             font-weight: bold;
-            transition: 0.3s;
+            font-size: 14px;
             display: flex; align-items: center; justify-content: center; gap: 10px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3);
         }
-        .btn-logout:hover { background-color: #c0392b; }
+        .btn-logout:hover { background-color: #c0392b; transform: translateY(-2px); }
 
         /* --- 3. MAIN CONTENT --- */
         .main-content {
@@ -99,103 +121,156 @@
             display: flex;
             flex-direction: column;
             overflow-y: auto;
+            position: relative;
         }
-
-        /* Top Bar */
+        
         .topbar {
             background: white;
-            height: 60px;
+            height: 70px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            padding: 0 40px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.03);
             position: sticky; top: 0; z-index: 100;
         }
+        
+        .page-title { 
+            font-size: 22px; 
+            font-weight: 700; 
+            color: var(--primary-navy); 
+            letter-spacing: -0.5px;
+        }
 
-        .page-title { font-size: 20px; font-weight: bold; color: var(--primary-navy); }
-        .user-profile { font-size: 14px; color: var(--text-grey); display: flex; align-items: center; gap: 10px; }
-        .user-avatar { width: 35px; height: 35px; background: #e0e0e0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: var(--primary-navy); }
+        .user-profile { 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            background: #f8f9fa;
+            padding: 8px 15px;
+            border-radius: 30px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .user-email { font-size: 13px; color: var(--text-dark); font-weight: 600; }
+        .user-avatar { 
+            width: 36px; height: 36px; 
+            background: var(--primary-navy); 
+            color: white;
+            border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; 
+            font-weight: bold; font-size: 14px;
+        }
 
         /* --- 4. REPORT CONTENT --- */
-        .content { padding: 20px; height: 100%; display: flex; flex-direction: column; }
+        .content { padding: 40px; max-width: 1400px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 20px; }
 
         /* Controls Panel */
         .controls { 
-            background: white; padding: 15px 25px; border-radius: 8px; 
-            display: flex; gap: 20px; align-items: center; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; 
+            background: white; padding: 25px 30px; border-radius: 16px; 
+            display: flex; gap: 25px; align-items: center; 
+            box-shadow: var(--card-shadow); 
+            border-top: 4px solid var(--primary-navy);
         }
         
         .control-group { display: flex; align-items: center; gap: 10px; }
-        .control-group label { font-weight: 600; color: #555; font-size: 14px; }
-        select { padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; outline: none; }
+        .control-group label { font-weight: 600; color: var(--text-dark); font-size: 14px; }
         
-        .btn-refresh { padding: 8px 20px; background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .btn-refresh:hover { background: #2980b9; transform: translateY(-1px); }
+        select { 
+            padding: 10px 15px; border: 1px solid #e0e0e0; 
+            border-radius: 8px; font-size: 14px; outline: none; 
+            background: #fdfdfd; cursor: pointer; transition: 0.3s;
+        }
+        select:focus { border-color: var(--primary-navy); background: white; }
         
-        .btn-export { padding: 8px 20px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-left: auto; transition: 0.2s; }
-        .btn-export:hover { background: #219150; transform: translateY(-1px); }
+        .btn-refresh { 
+            padding: 10px 25px; background: #3498db; color: white; border: none; 
+            border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s; 
+            font-size: 14px;
+        }
+        .btn-refresh:hover { background: #2980b9; transform: translateY(-2px); }
+        
+        .btn-export { 
+            padding: 10px 25px; background: #27ae60; color: white; border: none; 
+            border-radius: 8px; cursor: pointer; font-weight: 600; 
+            margin-left: auto; transition: all 0.2s; font-size: 14px;
+        }
+        .btn-export:hover { background: #219150; transform: translateY(-2px); }
 
         /* Legend */
-        .legend { display: flex; gap: 15px; margin-bottom: 10px; font-size: 12px; color: #666; margin-left: 5px; }
-        .legend-item { display: flex; align-items: center; gap: 5px; }
-        .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+        .legend { 
+            display: flex; gap: 20px; margin-bottom: 5px; 
+            font-size: 13px; color: var(--text-grey); font-weight: 500;
+        }
+        .legend-item { display: flex; align-items: center; gap: 8px; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
 
         /* Sheet Container */
-        .sheet-container { flex: 1; overflow: auto; background: white; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); position: relative; }
+        .sheet-container { 
+            flex: 1; overflow: auto; background: white; 
+            border-radius: 16px; box-shadow: var(--card-shadow); 
+            position: relative; max-height: 65vh;
+        }
         
         table { border-collapse: separate; border-spacing: 0; min-width: 100%; }
         
         /* Cells */
         th, td { 
-            border-right: 1px solid #eee; border-bottom: 1px solid #eee; 
-            padding: 8px 5px; text-align: center; font-size: 12px; 
+            border-right: 1px solid #f1f1f1; border-bottom: 1px solid #f1f1f1; 
+            padding: 12px 8px; text-align: center; font-size: 13px; 
             white-space: nowrap; vertical-align: middle; 
-            height: 50px;
+            height: 55px;
         }
 
         /* Sticky Headers */
         th { 
             background: var(--primary-navy); color: white; 
             position: sticky; top: 0; z-index: 10; 
-            height: 45px; font-weight: 600; 
+            height: 50px; font-weight: 600; 
+            text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;
             border-right: 1px solid rgba(255,255,255,0.1);
         }
         
         /* Sticky First Column (Names) */
         td:first-child, th:first-child { 
             position: sticky; left: 0; z-index: 11; 
-            background: #fdfdfd; 
-            border-right: 2px solid #ddd; 
-            font-weight: 600; text-align: left; 
-            width: 180px; padding-left: 15px; color: #333;
+            background: #fff; 
+            border-right: 2px solid #e0e0e0; 
+            font-weight: 700; text-align: left; 
+            min-width: 200px; padding-left: 20px; color: var(--primary-navy);
         }
         th:first-child { z-index: 12; background: var(--primary-navy); color: white; }
 
         /* Row Hover */
-        tr:hover td { background-color: #f1f7ff; }
-        tr:hover td:first-child { background-color: #eef5fc; }
+        tr:hover td { background-color: #f8f9fa; }
+        tr:hover td:first-child { background-color: #f8f9fa; }
 
         /* Status Colors (Subtler) */
-        .P { background-color: #e8f5e9; color: #1b5e20; } /* Light Green */
-        .A { background-color: #ffebee; color: #b71c1c; } /* Light Red */
-        .L { background-color: #fff8e1; color: #f57f17; } /* Light Orange */
-        .H { background-color: #f5f5f5; color: #9e9e9e; } /* Grey */
-        .OFF { background-color: #e3f2fd; color: #1565c0; font-size: 10px; } /* Blueish for Weekly Off */
+        .P { background-color: #f0fdf4; color: #166534; font-weight: 500; } /* Green */
+        .A { background-color: #fef2f2; color: #991b1b; font-weight: 600; } /* Red */
+        .L { background-color: #fffbeb; color: #b45309; font-weight: 600; } /* Orange */
+        .H { background-color: #f9fafb; color: #9ca3af; } /* Grey */
+        .OFF { background-color: #eff6ff; color: #1e40af; font-size: 11px; font-weight: 600; } /* Blue */
 
         /* Text inside cells */
-        .time-box { display: flex; flex-direction: column; justify-content: center; line-height: 1.3; font-size: 11px; }
-        .sub-text { font-size: 9px; opacity: 0.7; }
-        .late-badge { color: #d32f2f; font-weight: bold; font-size: 10px; display: block; }
+        .time-box { display: flex; flex-direction: column; justify-content: center; line-height: 1.4; font-size: 11px; }
+        .late-badge { color: #d97706; font-weight: 800; font-size: 10px; display: block; text-transform: uppercase; }
 
-        #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; font-size: 24px; color: #333; flex-direction: column; gap: 10px; }
+        #loadingOverlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(255,255,255,0.9); backdrop-filter: blur(5px);
+            z-index: 9999; display: flex; justify-content: center; align-items: center; 
+            font-size: 24px; color: var(--primary-navy); flex-direction: column; gap: 15px; font-weight: 600;
+        }
 
-        /* Responsive */
         @media (max-width: 900px) {
-            .sidebar { position: absolute; left: -260px; height: 100%; z-index: 200; }
-            .sidebar.open { left: 0; }
-            .toggle-btn { display: block; margin-right: 15px; cursor: pointer; font-size: 24px; }
+            .sidebar { position: fixed; left: -280px; height: 100%; }
+            .sidebar.active { transform: translateX(280px); }
+            .content { padding: 20px; }
+            .topbar { padding: 0 20px; }
+            .controls { flex-direction: column; align-items: stretch; }
+            .btn-export { margin-left: 0; }
+            .toggle-btn { display: block; font-size: 24px; cursor: pointer; margin-right: 15px; }
         }
         @media (min-width: 901px) { .toggle-btn { display: none; } }
     </style>
@@ -208,40 +283,34 @@
 <body>
 
     <div id="loadingOverlay">
-        <div style="font-size: 40px; margin-bottom: 10px;">📅</div>
+        <div style="font-size: 50px;">📅</div>
         <div>Generating Report...</div>
     </div>
 
     <nav class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <img src="synod_logo.png" alt="Synod Logo" class="sidebar-logo">
-            <div class="sidebar-brand">ADMIN PORTAL</div>
+            <div class="sidebar-brand">MANAGER PORTAL</div>
         </div>
 
         <ul class="nav-menu">
             <li class="nav-item">
-                <a href="admin_homepage.html"><span class="nav-icon">🏠</span> Home</a>
+                <a href="manager_dashboard.jsp"><span class="nav-icon">📊</span> Overview</a>
             </li>
             <li class="nav-item">
-                <a href="admin_dashboard.jsp"><span class="nav-icon">📊</span> Live Dashboard</a>
+                <a href="manager_mark_attendance.jsp"><span class="nav-icon">📍</span> My Attendance</a>
             </li>
             <li class="nav-item">
-                <a href="manage_employees.jsp"><span class="nav-icon">👥</span> Employees</a>
+                <a href="manager_manage_employees.jsp"><span class="nav-icon">👥</span> Assign Tasks</a>
             </li>
             <li class="nav-item">
-                <a href="admin_task_monitoring.jsp"><span class="nav-icon">📝</span> Tasks</a>
+                <a href="manager_task_monitoring.jsp"><span class="nav-icon">📝</span> Task Monitoring</a>
             </li>
             <li class="nav-item">
-                <a href="reports.jsp" class="active"><span class="nav-icon">📅</span> Attendance</a>
+                <a href="manager_report.jsp" class="active"><span class="nav-icon">📅</span> View Attendance</a>
             </li>
             <li class="nav-item">
-                <a href="admin_expenses.jsp"><span class="nav-icon">💸</span> Expenses</a>
-            </li>
-             <li class="nav-item">
-                <a href="payroll.jsp" class="active"><span class="nav-icon">💰</span> Payroll</a>
-            </li>
-            <li class="nav-item">
-                <a href="admin_settings.jsp"><span class="nav-icon">⚙️</span> Settings</a>
+                <a href="manager_settings.jsp"><span class="nav-icon">⚙️</span> My Settings</a>
             </li>
         </ul>
 
@@ -257,12 +326,13 @@
                 <div class="page-title">Monthly Attendance</div>
             </div>
             <div class="user-profile">
-                <span id="adminEmail">Loading...</span>
-                <div class="user-avatar">A</div>
+                <span id="mgrEmail" class="user-email">Loading...</span>
+                <div class="user-avatar">M</div>
             </div>
         </header>
 
         <div class="content">
+            
             <div class="controls">
                 <div class="control-group">
                     <label>Month:</label>
@@ -278,7 +348,7 @@
                     </select>
                 </div>
                 
-                <button onclick="generateReport()" class="btn-refresh">🔄 Refresh Report</button>
+                <button onclick="generateReport()" class="btn-refresh">🔄 Refresh Data</button>
                 <button class="btn-export" onclick="exportToExcel()">📥 Download Excel</button>
             </div>
 
@@ -299,7 +369,6 @@
     </div>
 
     <script>
-        // --- 1. CONFIG ---
         const firebaseConfig = {
             apiKey: "AIzaSyBzdM77WwTSkxvF0lsxf2WLNLhjuGyNvQQ",
             authDomain: "attendancewebapp-ef02a.firebaseapp.com",
@@ -308,7 +377,7 @@
             messagingSenderId: "734213881030",
             appId: "1:734213881030:web:bfdcee5a2ff293f87e6bc7"
         };
-        
+
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
@@ -317,7 +386,6 @@
         let attendanceData = [];
         const daysMap = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-        // Setup Month Dropdown
         const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
         const monthSelect = document.getElementById("monthSelect");
         monthNames.forEach((m, i) => {
@@ -328,17 +396,22 @@
             monthSelect.add(opt);
         });
 
-        // --- 2. AUTH CHECK ---
         auth.onAuthStateChanged(user => {
-            if(user) {
-                document.getElementById("adminEmail").innerText = user.email;
-                fetchUsersAndReport();
+            if (user) {
+                db.collection("users").doc(user.email).get().then(doc => {
+                    const role = doc.data().role;
+                    if (role !== 'manager' && role !== 'admin') {
+                        window.location.href = "login.jsp";
+                        return;
+                    } 
+                    document.getElementById("mgrEmail").innerText = user.email;
+                    fetchUsersAndReport();
+                });
             } else {
                 window.location.replace("index.html");
             }
         });
 
-        // --- 3. LOAD DATA ---
         function fetchUsersAndReport() {
             document.getElementById("loadingOverlay").style.display = "flex";
             
@@ -348,13 +421,13 @@
                     const d = doc.data();
                     if(d.role !== 'admin') {
                         allUsers.push({
-                            email: (d.email || "").toLowerCase(), // Store Lowercase for safe matching
+                            email: (d.email || "").toLowerCase(), 
                             name: d.fullName || d.email || "Unknown",
                             shifts: d.shiftTimings || {} 
                         });
                     }
                 });
-                // Sort Alphabetically
+                
                 allUsers.sort(function(a, b) {
                     return (a.name || "").localeCompare(b.name || "");
                 });
@@ -373,7 +446,6 @@
 
             document.getElementById("loadingOverlay").style.display = "flex";
 
-            // ⚠️ Using fixed 'attendance_2025' because your data is there (per screenshot)
             const collectionName = "attendance_2025"; 
 
             db.collection(collectionName)
@@ -397,24 +469,20 @@
                 });
         }
 
-        // --- 4. RENDER TABLE ---
         function renderTable(month, year) {
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             const tableHeader = document.getElementById("tableHeader");
             const tableBody = document.getElementById("tableBody");
             
-            // "Today" for future checking (Compare Start of Day)
             const today = new Date();
             today.setHours(0,0,0,0); 
             
-            // Header
             let headerHTML = "<th>Employee Name</th>";
             for(let i=1; i<=daysInMonth; i++) {
                 headerHTML += "<th>" + i + "</th>";
             }
             tableHeader.innerHTML = headerHTML;
 
-            // Body
             let bodyHTML = "";
 
             allUsers.forEach(user => {
@@ -422,9 +490,8 @@
 
                 for(let d=1; d<=daysInMonth; d++) {
                     const colDate = new Date(year, month, d);
-                    colDate.setHours(0,0,0,0); // Start of the column date
+                    colDate.setHours(0,0,0,0); 
                     
-                    // Future Check: If column date is AFTER today
                     if(colDate.getTime() > today.getTime()) {
                         bodyHTML += "<td class='H'>-</td>";
                         continue;
@@ -432,18 +499,15 @@
 
                     const dayName = daysMap[colDate.getDay()]; 
                     
-                    // SHIFT LOGIC: Default Sun = OFF if undefined
                     let requiredTime = user.shifts[dayName];
                     if(!requiredTime && dayName === "Sun") requiredTime = "OFF";
-                    if(!requiredTime) requiredTime = "09:30"; // Default start
+                    if(!requiredTime) requiredTime = "09:30"; 
 
-                    // Holiday check
                     if (requiredTime === "OFF") {
                         bodyHTML += "<td class='OFF'>OFF</td>";
                         continue;
                     }
 
-                    // Find records for this user & day
                     const dailyRecs = attendanceData.filter(function(a) {
                         if(!a.timestamp) return false;
                         const recDate = new Date(a.timestamp.seconds * 1000);
@@ -469,7 +533,6 @@
                             outTimeStr = outTimeObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false});
                         }
 
-                        // Late Check
                         const timeParts = requiredTime.split(":");
                         const reqH = parseInt(timeParts[0]);
                         const reqM = parseInt(timeParts[1]);
@@ -491,7 +554,6 @@
             tableBody.innerHTML = bodyHTML;
         }
 
-        // --- 5. EXPORT ---
         function exportToExcel() {
             let exportData = [];
             const month = parseInt(document.getElementById("monthSelect").value);
@@ -502,7 +564,7 @@
                 let row = { "Employee": user.name };
                 
                 for(let d=1; d<=daysInMonth; d++) {
-                     const dailyRecs = attendanceData.filter(function(a) {
+                      const dailyRecs = attendanceData.filter(function(a) {
                         if(!a.timestamp) return false;
                         const recDate = new Date(a.timestamp.seconds * 1000);
                         return a.email === user.email && recDate.getDate() === d;
@@ -528,11 +590,8 @@
             XLSX.writeFile(wb, "Attendance_Report.xlsx");
         }
 
-        function logout(){ auth.signOut().then(() => location.href = "index.html"); }
-        
-        function toggleSidebar() {
-            document.getElementById("sidebar").classList.toggle("open");
-        }
+        function logout(){ auth.signOut().then(() => window.location.href = "index.html"); }
+        function toggleSidebar() { document.getElementById("sidebar").classList.toggle("open"); }
     </script>
 </body>
 </html>

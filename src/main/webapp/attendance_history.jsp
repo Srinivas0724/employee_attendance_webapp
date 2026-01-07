@@ -266,14 +266,53 @@
 
         // --- 2. AUTH CHECK ---
         auth.onAuthStateChanged(user => {
-            if (user) {
-                document.getElementById("userEmail").innerText = user.email;
-                loadHistory(user.email);
-            } else {
-                window.location.replace("index.html");
+    if (user) {
+        db.collection("users").doc(user.email).get().then(doc => {
+            if (doc.exists) {
+                const role = doc.data().role;
+                
+                // 1. CHECK ACCESS: Allow Admin OR Manager
+                if (role !== 'admin' && role !== 'manager') {
+                    window.location.href = "index.html"; // Kick out employees
+                    return;
+                }
+
+                // 2. LOAD USER INFO
+                if(document.getElementById("adminEmail")) {
+                     document.getElementById("adminEmail").innerText = user.email;
+                }
+                
+                // 3. IF MANAGER -> HIDE RESTRICTED SIDEBAR LINKS
+                if (role === 'manager') {
+                    // Change Brand Name
+                    const brand = document.querySelector('.sidebar-brand');
+                    if(brand) brand.innerText = "MANAGER PORTAL";
+
+                    // Hide Expenses Link (Find by href)
+                    const expLink = document.querySelector('a[href="admin_expenses.jsp"]');
+                    if(expLink && expLink.parentElement) expLink.parentElement.style.display = 'none';
+
+                    // Hide Payroll Link
+                    const payLink = document.querySelector('a[href="payroll.jsp"]');
+                    if(payLink && payLink.parentElement) payLink.parentElement.style.display = 'none';
+                }
+
+                // 4. LOAD PAGE DATA (Call your page's load function)
+                // Note: Ensure the specific page's load function exists (e.g., loadEmployees(), loadTasks())
+                // You might need to check which page you are on, or just let the existing code run below this block.
+                if(typeof loadEmployeeList === "function") loadEmployeeList();
+                if(typeof loadTasks === "function") loadTasks();
+                if(typeof loadAttendance === "function") loadAttendance();
+                
+                // Hide Loader
+                const loader = document.getElementById("loadingOverlay");
+                if(loader) loader.style.display = "none";
             }
         });
-
+    } else {
+        window.location.replace("index.html");
+    }
+});
         function toggleSidebar() {
             document.getElementById("sidebar").classList.toggle("active");
         }

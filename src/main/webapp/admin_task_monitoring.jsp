@@ -220,7 +220,7 @@
                 <a href="admin_expenses.jsp"><span class="nav-icon">💸</span> Expenses</a>
             </li>
              <li class="nav-item">
-                <a href="payroll.jsp" class="active"><span class="nav-icon">💰</span> Payroll</a>
+                <a href="payroll.jsp"><span class="nav-icon">💰</span> Payroll</a>
             </li>
             <li class="nav-item">
                 <a href="admin_settings.jsp"><span class="nav-icon">⚙️</span> Settings</a>
@@ -317,16 +317,54 @@
         const db = firebase.firestore();
 
         let currentTaskId = null;
-        let currentAdminEmail = null;
+        let currentUserEmail = null;
+        let currentUserRole = "admin"; // Default
         let chatListener = null;
 
-        // --- 2. AUTH CHECK ---
+        // --- 2. AUTH CHECK & ROLE MANAGER ---
         auth.onAuthStateChanged(user => {
             if (user) {
-                currentAdminEmail = user.email;
-                document.getElementById("adminEmail").innerText = user.email;
-                document.getElementById("loadingOverlay").style.display = "none";
-                loadAllTasks();
+                db.collection("users").doc(user.email).get().then(doc => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        const role = data.role;
+                        
+                        // 1. ACCESS CHECK
+                        if (role !== 'admin' && role !== 'manager') {
+                            window.location.href = "index.html"; 
+                            return;
+                        }
+
+                        // 2. STORE ROLE & EMAIL
+                        currentUserRole = role;
+                        currentUserEmail = user.email;
+
+                        // 3. LOAD USER INFO
+                        if(document.getElementById("adminEmail")) {
+                             document.getElementById("adminEmail").innerText = user.email;
+                        }
+                        
+                        // 4. MANAGER SPECIFIC UI
+                        if (role === 'manager') {
+                            // Update Brand
+                            const brand = document.querySelector('.sidebar-brand');
+                            if(brand) brand.innerText = "MANAGER PORTAL";
+
+                            // Hide Restricted Links
+                            const expLink = document.querySelector('a[href="admin_expenses.jsp"]');
+                            if(expLink && expLink.parentElement) expLink.parentElement.style.display = 'none';
+
+                            const payLink = document.querySelector('a[href="payroll.jsp"]');
+                            if(payLink && payLink.parentElement) payLink.parentElement.style.display = 'none';
+                        }
+
+                        // 5. LOAD PAGE DATA
+                        loadAllTasks();
+                        
+                        // Hide Loader
+                        document.getElementById("loadingOverlay").style.display = "none";
+                    }
+                });
             } else {
                 window.location.replace("index.html");
             }
@@ -354,10 +392,9 @@
                         const title = d.title || "Untitled Task";
                         const project = d.project || "General";
                         
-                        // Encode data safely for function call
+                        // Encode data safely
                         const safeData = encodeURIComponent(JSON.stringify(d));
 
-                        // Use String Concatenation to avoid JSP errors
                         rows += "<tr>";
                         rows += "<td>" + assignedTo + "</td>";
                         rows += "<td><b>" + title + "</b></td>";
@@ -402,17 +439,21 @@
                     snap.forEach(doc => {
                         const m = doc.data();
                         
-                        // Admin messages are "Mine"
-                        const isMine = m.role === 'admin';
+                        // Check if message is mine (Current Admin/Manager)
+                        const isMine = m.email === currentUserEmail; 
                         const bubbleClass = isMine ? "msg-mine" : "msg-other";
-                        const senderName = isMine ? "Me" : "Employee";
+                        
+                        // Sender Name Logic
+                        let senderName = "Employee";
+                        if (m.role === 'admin') senderName = "Admin";
+                        if (m.role === 'manager') senderName = "Manager";
+                        if (isMine) senderName = "Me";
                         
                         let time = "";
                         if(m.timestamp) {
                             time = new Date(m.timestamp.seconds * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
                         }
 
-                        // String Concatenation for Chat Bubble
                         let msgHtml = "<div class='msg-bubble " + bubbleClass + "'>";
                         msgHtml += "<div>" + m.message + "</div>";
                         msgHtml += "<span class='msg-meta'>" + senderName + " • " + time + "</span>";
@@ -431,8 +472,8 @@
 
             db.collection("tasks").doc(currentTaskId).collection("replies").add({
                 message: msg,
-                email: currentAdminEmail,
-                role: 'admin', // ID as Admin
+                email: currentUserEmail,
+                role: currentUserRole, // Sends as 'admin' or 'manager'
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             }).then(() => {
                 input.value = "";

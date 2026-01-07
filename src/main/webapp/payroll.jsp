@@ -205,7 +205,7 @@
                 <a href="admin_task_monitoring.jsp"><span class="nav-icon">📝</span> Tasks</a>
             </li>
             <li class="nav-item">
-                <a href="admin_attendance.jsp"><span class="nav-icon">📅</span> Attendance</a>
+                <a href="reports.jsp"><span class="nav-icon">📅</span> Attendance</a>
             </li>
             <li class="nav-item">
                 <a href="admin_expenses.jsp"><span class="nav-icon">💸</span> Expenses</a>
