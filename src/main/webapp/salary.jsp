@@ -9,7 +9,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Salary - Synod Bioscience</title>
+    <title>My Salary - Employee Portal</title>
     
     <style>
         /* --- 1. RESET & VARS --- */
@@ -17,12 +17,13 @@
         
         :root {
             --primary-navy: #1a3b6e;
+            --primary-dark: #122b52;
             --primary-green: #2ecc71;
-            --bg-light: #f4f6f9;
-            --text-dark: #333;
-            --text-grey: #666;
-            --sidebar-width: 260px;
-            --border-color: #eee;
+            --bg-light: #f0f2f5;
+            --text-dark: #2c3e50;
+            --text-grey: #7f8c8d;
+            --card-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            --sidebar-width: 280px;
         }
 
         body { display: flex; height: 100vh; background-color: var(--bg-light); overflow: hidden; }
@@ -30,71 +31,89 @@
         /* --- 2. SIDEBAR --- */
         .sidebar {
             width: var(--sidebar-width);
-            background-color: var(--primary-navy);
+            background: linear-gradient(180deg, var(--primary-navy) 0%, var(--primary-dark) 100%);
             color: white;
             display: flex;
             flex-direction: column;
-            transition: transform 0.3s ease-in-out;
+            transition: all 0.3s ease;
             flex-shrink: 0;
             z-index: 1000;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.1);
         }
 
         .sidebar-header {
-            padding: 20px;
-            background-color: rgba(0,0,0,0.1);
+            padding: 30px 20px;
             text-align: center;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            background: rgba(0,0,0,0.1);
         }
 
         .sidebar-logo {
-            max-width: 140px;
+            max-width: 130px;
             height: auto;
-            margin-bottom: 10px;
-            filter: brightness(0) invert(1);
+            margin-bottom: 15px;
+            filter: brightness(0) invert(1) drop-shadow(0 4px 6px rgba(0,0,0,0.2));
         }
         
-        .sidebar-brand { font-size: 14px; opacity: 0.8; letter-spacing: 1px; text-transform: uppercase; }
+        .sidebar-brand { 
+            font-size: 13px; 
+            opacity: 0.9; 
+            letter-spacing: 1.5px; 
+            text-transform: uppercase; 
+            font-weight: 600;
+        }
 
         .nav-menu {
             list-style: none;
-            padding: 20px 0;
+            padding: 20px 15px;
             flex: 1;
             overflow-y: auto;
         }
 
+        .nav-item { margin-bottom: 8px; }
+
         .nav-item a {
             display: flex;
             align-items: center;
-            padding: 15px 25px;
+            padding: 14px 20px;
             color: #bdc3c7;
             text-decoration: none;
             font-size: 15px;
-            transition: all 0.3s;
-            border-left: 4px solid transparent;
+            font-weight: 500;
+            border-radius: 10px;
+            transition: all 0.2s ease;
         }
 
-        .nav-item a:hover, .nav-item a.active {
-            background-color: rgba(255,255,255,0.05);
+        .nav-item a:hover {
+            background-color: rgba(255,255,255,0.08);
             color: white;
-            border-left-color: var(--primary-green);
+            transform: translateX(5px);
+        }
+
+        .nav-item a.active {
+            background-color: var(--primary-green);
+            color: white;
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4);
         }
 
         .nav-icon { margin-right: 15px; font-size: 18px; width: 25px; text-align: center; }
 
-        .sidebar-footer { padding: 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+        .sidebar-footer { padding: 25px; border-top: 1px solid rgba(255,255,255,0.05); }
         .btn-logout {
             width: 100%;
-            padding: 12px;
-            background-color: rgba(231, 76, 60, 0.8);
+            padding: 14px;
+            background-color: rgba(231, 76, 60, 0.9);
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 10px;
             cursor: pointer;
             font-weight: bold;
-            transition: 0.3s;
+            font-size: 14px;
             display: flex; align-items: center; justify-content: center; gap: 10px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3);
         }
-        .btn-logout:hover { background-color: #c0392b; }
+        .btn-logout:hover { background-color: #c0392b; transform: translateY(-2px); }
 
         /* --- 3. MAIN CONTENT --- */
         .main-content {
@@ -104,103 +123,233 @@
             overflow-y: auto;
             position: relative;
         }
-
-        /* Top Bar */
+        
         .topbar {
             background: white;
-            height: 60px;
+            height: 70px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            padding: 0 40px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.03);
             position: sticky; top: 0; z-index: 100;
         }
+        
+        .page-title { 
+            font-size: 22px; 
+            font-weight: 700; 
+            color: var(--primary-navy); 
+            letter-spacing: -0.5px;
+        }
 
-        .toggle-btn { display: none; font-size: 24px; cursor: pointer; color: var(--primary-navy); margin-right: 15px; }
-        .page-title { font-size: 18px; font-weight: bold; color: var(--primary-navy); }
-        .user-profile { font-size: 14px; color: var(--text-grey); display: flex; align-items: center; gap: 10px; }
-        .user-avatar { width: 35px; height: 35px; background: #e0e0e0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: var(--primary-navy); }
+        .user-profile { 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            background: #f8f9fa;
+            padding: 8px 15px;
+            border-radius: 30px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .user-email { font-size: 13px; color: var(--text-dark); font-weight: 600; }
+        .user-avatar { 
+            width: 36px; height: 36px; 
+            background: var(--primary-navy); 
+            color: white;
+            border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; 
+            font-weight: bold; font-size: 14px;
+        }
 
         /* --- 4. SALARY CONTENT --- */
-        .content { padding: 30px; max-width: 900px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 20px; }
+        .content { 
+            padding: 40px; 
+            max-width: 900px; 
+            margin: 0 auto; 
+            width: 100%; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 30px; 
+        }
 
         /* Controls Bar */
         .controls-card {
-            background: white; padding: 20px; border-radius: 10px; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05); width: 100%;
-            display: flex; gap: 15px; align-items: center; justify-content: center;
+            background: white; 
+            padding: 25px 30px; 
+            border-radius: 16px; 
+            box-shadow: var(--card-shadow); 
+            width: 100%;
+            display: flex; 
+            gap: 20px; 
+            align-items: center; 
+            justify-content: center;
             flex-wrap: wrap;
+            border-top: 4px solid var(--primary-navy);
         }
         
-        select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; min-width: 150px; }
+        .control-group { display: flex; align-items: center; gap: 10px; }
+        label { font-weight: 600; font-size: 14px; color: var(--text-dark); }
+
+        select { 
+            padding: 10px 15px; 
+            border: 1px solid #e0e0e0; 
+            border-radius: 8px; 
+            font-size: 14px; 
+            min-width: 160px; 
+            outline: none; 
+            transition: 0.3s;
+            background: #fdfdfd;
+        }
+        select:focus { border-color: var(--primary-navy); background: white; }
         
         .btn-view { 
-            background: var(--primary-navy); color: white; border: none; padding: 10px 25px; 
-            border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; 
-            transition: 0.2s;
+            background: var(--primary-navy); 
+            color: white; 
+            border: none; 
+            padding: 10px 25px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: 700; 
+            font-size: 14px; 
+            transition: all 0.2s;
+            box-shadow: 0 4px 10px rgba(26, 59, 110, 0.2);
         }
-        .btn-view:hover { background: #132c52; }
+        .btn-view:hover { background: #132c52; transform: translateY(-2px); }
 
         /* Salary Slip */
         .salary-slip {
-            background: white; width: 100%; max-width: 700px;
-            padding: 40px; border-radius: 8px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            display: none; border: 1px solid #eee;
+            background: white; 
+            width: 100%; 
+            max-width: 750px;
+            padding: 50px; 
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+            display: none; 
+            border: 1px solid #f1f1f1;
             position: relative;
+            animation: slideUp 0.4s ease;
         }
 
-        .slip-header { text-align: center; border-bottom: 2px solid var(--primary-navy); padding-bottom: 20px; margin-bottom: 30px; }
-        .slip-header h2 { margin: 0; color: var(--primary-navy); text-transform: uppercase; letter-spacing: 1px; }
-        .company-name { font-size: 14px; color: #777; margin-top: 5px; font-weight: 600; }
-        
-        .emp-details { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; background: #f8f9fa; padding: 15px; border-radius: 6px; font-size: 14px; }
-        .emp-details div b { color: #555; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        .salary-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        .salary-table th { text-align: left; padding: 10px; border-bottom: 1px solid #ddd; color: #555; font-size: 13px; text-transform: uppercase; }
-        .salary-table td { padding: 12px 10px; border-bottom: 1px solid #f1f1f1; font-size: 14px; }
+        .slip-header { 
+            text-align: center; 
+            border-bottom: 2px solid var(--primary-navy); 
+            padding-bottom: 25px; 
+            margin-bottom: 35px; 
+        }
+        .slip-header h2 { 
+            margin: 0; 
+            color: var(--primary-navy); 
+            text-transform: uppercase; 
+            letter-spacing: 1.5px; 
+            font-size: 24px;
+        }
+        .company-name { font-size: 15px; color: var(--text-grey); margin-top: 5px; font-weight: 600; }
+        
+        .emp-details { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 25px; 
+            margin-bottom: 35px; 
+            background: #f8f9fa; 
+            padding: 20px; 
+            border-radius: 10px; 
+            font-size: 14px; 
+            border: 1px solid #e9ecef;
+        }
+        .emp-details div b { color: var(--primary-navy); display: block; margin-bottom: 4px; }
+        .emp-details div span { color: var(--text-dark); }
+
+        .salary-table { width: 100%; border-collapse: collapse; margin-bottom: 25px; }
+        .salary-table th { 
+            text-align: left; padding: 12px 10px; 
+            border-bottom: 2px solid #eee; 
+            color: var(--text-grey); font-size: 13px; 
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .salary-table td { padding: 15px 10px; border-bottom: 1px solid #f1f1f1; font-size: 14px; color: var(--text-dark); }
         .salary-table tr:last-child td { border-bottom: none; }
         
-        .amount-col { text-align: right; font-weight: 600; }
-        .text-green { color: #27ae60; }
-        .text-red { color: #e74c3c; }
+        .amount-col { text-align: right; font-weight: 700; font-family: 'Consolas', monospace; font-size: 15px; }
+        .text-green { color: #16a34a; }
+        .text-red { color: #dc2626; }
 
         .total-row { 
-            background: var(--primary-navy); color: white; 
-            padding: 15px; border-radius: 6px; display: flex; 
-            justify-content: space-between; align-items: center;
-            font-size: 18px; font-weight: bold; margin-top: 20px;
+            background: var(--primary-navy); 
+            color: white; 
+            padding: 20px; 
+            border-radius: 10px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            font-size: 18px; 
+            font-weight: 800; 
+            margin-top: 10px;
+            box-shadow: 0 5px 15px rgba(26, 59, 110, 0.2);
         }
 
         .btn-print { 
-            background: var(--primary-green); color: white; border: none; padding: 12px 30px; 
-            border-radius: 50px; cursor: pointer; font-weight: bold; margin-top: 30px; 
-            display: block; margin-left: auto; margin-right: auto;
-            box-shadow: 0 4px 10px rgba(46, 204, 113, 0.3); transition: 0.2s;
+            background: var(--primary-green); 
+            color: white; 
+            border: none; 
+            padding: 14px 35px; 
+            border-radius: 50px; 
+            cursor: pointer; 
+            font-weight: 700; 
+            margin-top: 40px; 
+            display: block; 
+            margin-left: auto; 
+            margin-right: auto;
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3); 
+            transition: all 0.2s;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-        .btn-print:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(46, 204, 113, 0.4); }
+        .btn-print:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4); }
 
-        .no-data { text-align: center; color: #999; margin-top: 50px; font-style: italic; }
+        .no-data { 
+            text-align: center; color: var(--text-grey); 
+            margin-top: 80px; font-style: italic; font-size: 15px;
+            background: white; padding: 40px; border-radius: 16px;
+            width: 100%; box-shadow: var(--card-shadow);
+        }
 
         /* Loader */
-        #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; font-size: 24px; color: #333; flex-direction: column; gap: 10px; }
+        #loadingOverlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(255,255,255,0.9); backdrop-filter: blur(5px);
+            z-index: 9999; display: flex; justify-content: center; align-items: center; 
+            font-size: 24px; color: var(--primary-navy); flex-direction: column; gap: 15px; font-weight: 600;
+        }
 
         /* Print Styles */
         @media print {
             body * { visibility: hidden; }
+            .sidebar, .topbar, .controls-card, .btn-print { display: none !important; }
             .salary-slip, .salary-slip * { visibility: visible; }
-            .salary-slip { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; border: 2px solid #333; margin: 0; padding: 20px; }
-            .btn-print { display: none; }
+            .salary-slip { 
+                position: absolute; left: 0; top: 0; width: 100%; 
+                box-shadow: none; border: 2px solid #000; 
+                margin: 0; padding: 40px; 
+                display: block !important;
+            }
+            .content { padding: 0; margin: 0; }
         }
 
         /* Mobile Responsive */
         @media (max-width: 900px) {
-            .sidebar { position: fixed; left: -260px; height: 100%; width: 260px; }
-            .sidebar.active { transform: translateX(260px); }
-            .toggle-btn { display: block; }
+            .sidebar { position: fixed; left: -280px; height: 100%; }
+            .sidebar.active { transform: translateX(280px); }
+            .toggle-btn { display: block; font-size: 24px; cursor: pointer; margin-right: 15px; }
+            .content { padding: 20px; }
+            .topbar { padding: 0 20px; }
             .emp-details { grid-template-columns: 1fr; }
+            .controls-card { flex-direction: column; align-items: stretch; }
+            select, .btn-view { width: 100%; }
         }
     </style>
 
@@ -211,7 +360,7 @@
 <body>
 
     <div id="loadingOverlay">
-        <div style="font-size: 40px; margin-bottom: 10px;">💰</div>
+        <div style="font-size: 50px;">💰</div>
         <div>Loading Profile...</div>
     </div>
 
@@ -254,7 +403,7 @@
                 <div class="page-title">Salary & Payslips</div>
             </div>
             <div class="user-profile">
-                <span id="userEmail">Loading...</span>
+                <span id="userEmail" class="user-email">Loading...</span>
                 <div class="user-avatar">E</div>
             </div>
         </header>
@@ -262,13 +411,18 @@
         <div class="content">
             
             <div class="controls-card">
-                <label>Select Period:</label>
-                <select id="monthSelect"></select>
-                <select id="yearSelect">
-                    <option value="2024">2024</option>
-                    <option value="2025" selected>2025</option>
-                    <option value="2026">2026</option>
-                </select>
+                <div class="control-group">
+                    <label>Month:</label>
+                    <select id="monthSelect"></select>
+                </div>
+                <div class="control-group">
+                    <label>Year:</label>
+                    <select id="yearSelect">
+                        <option value="2024">2024</option>
+                        <option value="2025" selected>2025</option>
+                        <option value="2026">2026</option>
+                    </select>
+                </div>
                 <button onclick="fetchSalary()" class="btn-view">🔍 View Payslip</button>
             </div>
 
@@ -278,14 +432,14 @@
                 <div class="slip-header">
                     <h2>Salary Slip</h2>
                     <div class="company-name" id="dispCompany">Synod Bioscience</div>
-                    <p style="margin: 10px 0 0 0; color:#555;">Payslip for the month of <b id="dispMonth"></b></p>
+                    <p style="margin: 10px 0 0 0; color:#555; font-size:14px;">Payslip for the month of <b id="dispMonth" style="color:var(--primary-navy);"></b></p>
                 </div>
 
                 <div class="emp-details">
-                    <div><b>Employee Name:</b> <br><span id="dispName">-</span></div>
-                    <div><b>Employee ID / Email:</b> <br><span id="dispEmail">-</span></div>
-                    <div><b>Days Present:</b> <br><span id="dispDays">-</span></div>
-                    <div><b>Payment Date:</b> <br><span id="dispDate">-</span></div>
+                    <div><b>Employee Name:</b> <span id="dispName">-</span></div>
+                    <div><b>Employee ID / Email:</b> <span id="dispEmail">-</span></div>
+                    <div><b>Days Present:</b> <span id="dispDays">-</span></div>
+                    <div><b>Generated On:</b> <span id="dispDate">-</span></div>
                 </div>
 
                 <table class="salary-table">
@@ -415,7 +569,7 @@
                 .catch(err => {
                     console.error(err);
                     if(err.message.includes("requires an index")) {
-                        alert("⚠️ SYSTEM ALERT: Database Index Missing. Please create it in Firebase Console.");
+                        alert("⚠️ SYSTEM ALERT: Database Index Missing. Please check console.");
                     } else {
                         alert("Error fetching data: " + err.message);
                     }

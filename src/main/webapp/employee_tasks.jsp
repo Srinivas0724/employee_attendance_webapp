@@ -9,7 +9,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Tasks - Synod Bioscience</title>
+    <title>My Tasks - Employee Portal</title>
     
     <style>
         /* --- 1. RESET & VARS --- */
@@ -17,12 +17,13 @@
         
         :root {
             --primary-navy: #1a3b6e;
+            --primary-dark: #122b52;
             --primary-green: #2ecc71;
-            --bg-light: #f4f6f9;
-            --text-dark: #333;
-            --text-grey: #666;
-            --sidebar-width: 260px;
-            --border-color: #e0e0e0;
+            --bg-light: #f0f2f5;
+            --text-dark: #2c3e50;
+            --text-grey: #7f8c8d;
+            --card-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            --sidebar-width: 280px;
         }
 
         body { display: flex; height: 100vh; background-color: var(--bg-light); overflow: hidden; }
@@ -30,71 +31,89 @@
         /* --- 2. SIDEBAR --- */
         .sidebar {
             width: var(--sidebar-width);
-            background-color: var(--primary-navy);
+            background: linear-gradient(180deg, var(--primary-navy) 0%, var(--primary-dark) 100%);
             color: white;
             display: flex;
             flex-direction: column;
-            transition: transform 0.3s ease-in-out;
+            transition: all 0.3s ease;
             flex-shrink: 0;
             z-index: 1000;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.1);
         }
 
         .sidebar-header {
-            padding: 20px;
-            background-color: rgba(0,0,0,0.1);
+            padding: 30px 20px;
             text-align: center;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            background: rgba(0,0,0,0.1);
         }
 
         .sidebar-logo {
-            max-width: 140px;
+            max-width: 130px;
             height: auto;
-            margin-bottom: 10px;
-            filter: brightness(0) invert(1);
+            margin-bottom: 15px;
+            filter: brightness(0) invert(1) drop-shadow(0 4px 6px rgba(0,0,0,0.2));
         }
         
-        .sidebar-brand { font-size: 14px; opacity: 0.8; letter-spacing: 1px; text-transform: uppercase; }
+        .sidebar-brand { 
+            font-size: 13px; 
+            opacity: 0.9; 
+            letter-spacing: 1.5px; 
+            text-transform: uppercase; 
+            font-weight: 600;
+        }
 
         .nav-menu {
             list-style: none;
-            padding: 20px 0;
+            padding: 20px 15px;
             flex: 1;
             overflow-y: auto;
         }
 
+        .nav-item { margin-bottom: 8px; }
+
         .nav-item a {
             display: flex;
             align-items: center;
-            padding: 15px 25px;
+            padding: 14px 20px;
             color: #bdc3c7;
             text-decoration: none;
             font-size: 15px;
-            transition: all 0.3s;
-            border-left: 4px solid transparent;
+            font-weight: 500;
+            border-radius: 10px;
+            transition: all 0.2s ease;
         }
 
-        .nav-item a:hover, .nav-item a.active {
-            background-color: rgba(255,255,255,0.05);
+        .nav-item a:hover {
+            background-color: rgba(255,255,255,0.08);
             color: white;
-            border-left-color: var(--primary-green);
+            transform: translateX(5px);
+        }
+
+        .nav-item a.active {
+            background-color: var(--primary-green);
+            color: white;
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4);
         }
 
         .nav-icon { margin-right: 15px; font-size: 18px; width: 25px; text-align: center; }
 
-        .sidebar-footer { padding: 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+        .sidebar-footer { padding: 25px; border-top: 1px solid rgba(255,255,255,0.05); }
         .btn-logout {
             width: 100%;
-            padding: 12px;
-            background-color: rgba(231, 76, 60, 0.8);
+            padding: 14px;
+            background-color: rgba(231, 76, 60, 0.9);
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 10px;
             cursor: pointer;
             font-weight: bold;
-            transition: 0.3s;
+            font-size: 14px;
             display: flex; align-items: center; justify-content: center; gap: 10px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3);
         }
-        .btn-logout:hover { background-color: #c0392b; }
+        .btn-logout:hover { background-color: #c0392b; transform: translateY(-2px); }
 
         /* --- 3. MAIN CONTENT --- */
         .main-content {
@@ -104,108 +123,148 @@
             overflow-y: auto;
             position: relative;
         }
-
-        /* Top Bar */
+        
         .topbar {
             background: white;
-            height: 60px;
+            height: 70px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            padding: 0 40px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.03);
             position: sticky; top: 0; z-index: 100;
         }
-
-        .toggle-btn { display: none; font-size: 24px; cursor: pointer; color: var(--primary-navy); margin-right: 15px; }
-        .page-title { font-size: 18px; font-weight: bold; color: var(--primary-navy); }
-        .user-profile { font-size: 14px; color: var(--text-grey); display: flex; align-items: center; gap: 10px; }
-        .user-avatar { width: 35px; height: 35px; background: #e0e0e0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: var(--primary-navy); }
-
-        /* --- 4. TABS & LAYOUT --- */
-        .content { padding: 20px; max-width: 1200px; margin: 0 auto; width: 100%; }
-
-        .tab-nav { display: flex; gap: 15px; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        .tab-btn {
-            background: transparent; border: none; padding: 10px 20px;
-            font-size: 15px; font-weight: 600; color: #777;
-            cursor: pointer; border-radius: 20px; transition: 0.3s;
+        
+        .page-title { 
+            font-size: 22px; 
+            font-weight: 700; 
+            color: var(--primary-navy); 
+            letter-spacing: -0.5px;
         }
-        .tab-btn.active { background: var(--primary-navy); color: white; box-shadow: 0 4px 6px rgba(26, 59, 110, 0.2); }
-        .tab-btn:hover:not(.active) { background: #e9ecef; }
 
-        .tab-pane { display: none; animation: fadeIn 0.3s; }
-        .tab-pane.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .user-profile { 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            background: #f8f9fa;
+            padding: 8px 15px;
+            border-radius: 30px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .user-email { font-size: 13px; color: var(--text-dark); font-weight: 600; }
+        .user-avatar { 
+            width: 36px; height: 36px; 
+            background: var(--primary-navy); 
+            color: white;
+            border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; 
+            font-weight: bold; font-size: 14px;
+        }
+
+        /* --- 4. PAGE CONTENT --- */
+        .content { padding: 40px; max-width: 1400px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 30px; }
+
+        /* Tabs */
+        .tab-container { display: flex; gap: 15px; border-bottom: 2px solid #e9ecef; padding-bottom: 15px; }
+        
+        .tab-btn { 
+            padding: 12px 30px; border: none; background: transparent; 
+            color: var(--text-grey); cursor: pointer; border-radius: 30px; 
+            font-weight: 600; font-size: 14px; transition: all 0.3s ease;
+        }
+        .tab-btn:hover { background: #e9ecef; color: var(--primary-navy); }
+        .tab-btn.active { background: var(--primary-navy); color: white; box-shadow: 0 4px 10px rgba(26, 59, 110, 0.2); }
+        
+        .tab-pane { display: none; width: 100%; }
+        .tab-pane.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* Cards */
-        .card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #f1f1f1; }
-        
+        .card { 
+            background: white; padding: 30px; border-radius: 16px; 
+            box-shadow: var(--card-shadow); border-top: 4px solid var(--primary-navy);
+        }
+
         /* Table */
         .table-responsive { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; min-width: 600px; }
-        th { text-align: left; padding: 15px; background: #f8f9fa; color: #555; font-size: 13px; text-transform: uppercase; font-weight: 700; border-bottom: 2px solid #eee; }
-        td { padding: 15px; border-bottom: 1px solid #f1f1f1; font-size: 14px; color: #333; vertical-align: middle; }
-        tr:hover { background-color: #fafafa; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 600px; }
+        
+        th { 
+            background: #f8f9fa; color: var(--text-grey); padding: 15px; 
+            text-align: left; font-size: 12px; text-transform: uppercase; 
+            border-bottom: 2px solid #eee; font-weight: 700; letter-spacing: 0.5px;
+        }
+        
+        td { 
+            padding: 15px; border-bottom: 1px solid #f1f1f1; 
+            color: var(--text-dark); font-size: 14px; vertical-align: middle; 
+        }
+        tr:hover td { background: #fcfcfc; }
 
         /* Badges */
-        .badge { padding: 5px 12px; border-radius: 12px; font-size: 11px; font-weight: bold; color: white; display: inline-block; }
+        .badge { padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; color: white; display: inline-block; }
         .bg-HIGH { background-color: #e74c3c; }
         .bg-MEDIUM { background-color: #f39c12; }
         .bg-LOW { background-color: #2ecc71; }
 
         /* Status Select */
-        .status-select { padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; border: 1px solid transparent; cursor: pointer; outline: none; }
+        .status-select { 
+            padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; 
+            border: 1px solid transparent; cursor: pointer; outline: none; transition: 0.2s;
+        }
         .status-select.PENDING { background: #fff0f0; color: #c0392b; border-color: #ffcccc; }
         .status-select.IN_PROGRESS { background: #fff8e1; color: #d35400; border-color: #ffe0b2; }
         .status-select.DONE { background: #e8f5e9; color: #27ae60; border-color: #c8e6c9; }
 
-        .btn-action { background: var(--primary-navy); color: white; border: none; padding: 6px 15px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: 600; }
-        .btn-action:hover { background: #132c52; }
+        .btn-action { 
+            background: var(--primary-navy); color: white; border: none; 
+            padding: 8px 16px; border-radius: 6px; font-size: 12px; 
+            cursor: pointer; font-weight: 600; transition: all 0.2s;
+        }
+        .btn-action:hover { background: #132c52; transform: translateY(-2px); }
 
-        /* --- 5. PROJECT CHAT LAYOUT --- */
+        /* --- CHAT LAYOUT --- */
         .chat-layout { display: flex; gap: 20px; height: 500px; }
-        .chat-sidebar { width: 250px; border-right: 1px solid #eee; display: flex; flex-direction: column; gap: 10px; padding-right: 20px; }
-        .chat-main { flex: 1; display: flex; flex-direction: column; background: #f9f9f9; border-radius: 8px; border: 1px solid #eee; overflow: hidden; }
+        .chat-sidebar { width: 280px; border-right: 1px solid #eee; display: flex; flex-direction: column; gap: 15px; padding-right: 20px; }
+        .chat-main { flex: 1; display: flex; flex-direction: column; background: #fcfcfc; border-radius: 12px; border: 1px solid #e0e0e0; overflow: hidden; }
         
-        .chat-header { padding: 15px; background: white; border-bottom: 1px solid #eee; font-weight: bold; color: var(--primary-navy); }
-        .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        .chat-header { padding: 15px 20px; background: white; border-bottom: 1px solid #eee; font-weight: 700; color: var(--primary-navy); font-size: 15px; }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
         
-        /* Chat Bubbles */
-        .msg-bubble { max-width: 75%; padding: 10px 15px; border-radius: 15px; font-size: 13px; line-height: 1.4; position: relative; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-        .msg-mine { align-self: flex-end; background: #dcf8c6; color: #333; border-bottom-right-radius: 2px; }
-        .msg-other { align-self: flex-start; background: white; color: #333; border-bottom-left-radius: 2px; }
-        .msg-info { font-size: 10px; color: #777; margin-top: 4px; display: block; text-align: right; }
-        .msg-sender { font-size: 11px; font-weight: bold; color: var(--primary-navy); display: block; margin-bottom: 2px; }
+        .msg-bubble { max-width: 75%; padding: 12px 16px; border-radius: 16px; font-size: 14px; line-height: 1.5; position: relative; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .msg-mine { align-self: flex-end; background: #dcf8c6; color: var(--text-dark); border-bottom-right-radius: 2px; }
+        .msg-other { align-self: flex-start; background: white; color: var(--text-dark); border-bottom-left-radius: 2px; }
+        .msg-sender { font-size: 11px; font-weight: 700; color: var(--primary-navy); display: block; margin-bottom: 4px; }
 
-        .chat-input-area { padding: 15px; background: white; border-top: 1px solid #eee; display: flex; gap: 10px; }
-        .chat-input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 25px; outline: none; transition: 0.3s; }
+        .chat-input-area { padding: 15px; background: white; border-top: 1px solid #eee; display: flex; gap: 12px; }
+        .chat-input { flex: 1; padding: 12px 15px; border: 1px solid #ddd; border-radius: 25px; outline: none; transition: 0.3s; font-size: 14px; }
         .chat-input:focus { border-color: var(--primary-navy); }
-        .btn-send { background: var(--primary-green); color: white; border: none; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; }
-        .btn-send:hover { background: #27ae60; }
+        .btn-send { background: var(--primary-green); color: white; border: none; width: 42px; height: 42px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; transition: 0.2s; }
+        .btn-send:hover { transform: scale(1.1); }
 
-        /* --- 6. MODAL --- */
-        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center; backdrop-filter: blur(2px); }
-        .modal-content { background-color: white; width: 600px; max-width: 90%; height: 80vh; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.2); }
-        .modal-header { padding: 15px 20px; background: var(--primary-navy); color: white; display: flex; justify-content: space-between; align-items: center; }
-        .modal-title { font-size: 16px; font-weight: bold; }
-        .close-btn { background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
+        /* --- MODAL --- */
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .modal-content { background-color: white; width: 600px; max-width: 90%; height: 85vh; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.2); }
+        .modal-header { padding: 20px 25px; background: var(--primary-navy); color: white; display: flex; justify-content: space-between; align-items: center; }
+        .modal-title { font-size: 18px; font-weight: 700; }
+        .close-btn { background: none; border: none; color: white; font-size: 24px; cursor: pointer; opacity: 0.8; }
+        .close-btn:hover { opacity: 1; }
+
+        .task-details { padding: 20px 25px; background: #f8f9fa; border-bottom: 1px solid #eee; }
+        .task-details h3 { margin: 0 0 8px 0; color: var(--primary-navy); font-size: 18px; font-weight: 700; }
+        .task-meta { font-size: 13px; color: var(--text-grey); display: flex; gap: 20px; font-weight: 500; }
         
-        .task-details { padding: 20px; background: #f8f9fa; border-bottom: 1px solid #eee; }
-        .task-details h3 { margin: 0 0 5px 0; color: #333; font-size: 18px; }
-        .task-meta { font-size: 13px; color: #666; display: flex; gap: 15px; margin-top: 5px; }
+        #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); backdrop-filter: blur(5px); z-index: 9999; display: flex; justify-content: center; align-items: center; font-size: 24px; color: var(--primary-navy); flex-direction: column; gap: 15px; font-weight: 600; }
 
-        /* Loader */
-        #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; font-size: 24px; color: #333; flex-direction: column; gap: 10px; }
-
-        /* Mobile Responsive */
         @media (max-width: 900px) {
-            .sidebar { position: fixed; left: -260px; height: 100%; width: 260px; }
-            .sidebar.active { transform: translateX(260px); }
-            .toggle-btn { display: block; }
-            
+            .sidebar { position: fixed; left: -280px; height: 100%; }
+            .sidebar.active { transform: translateX(280px); }
+            .toggle-btn { display: block; font-size: 24px; cursor: pointer; margin-right: 15px; }
+            .content { padding: 20px; }
+            .topbar { padding: 0 20px; }
             .chat-layout { flex-direction: column; height: auto; }
-            .chat-sidebar { width: 100%; border-right: none; border-bottom: 1px solid #eee; padding-bottom: 15px; padding-right: 0; }
+            .chat-sidebar { width: 100%; border-right: none; border-bottom: 1px solid #eee; padding-bottom: 15px; }
             .chat-main { height: 400px; }
         }
     </style>
@@ -217,7 +276,7 @@
 <body>
 
     <div id="loadingOverlay">
-        <div style="font-size: 40px; margin-bottom: 10px;">📝</div>
+        <div style="font-size: 50px;">📝</div>
         <div>Loading Tasks...</div>
     </div>
 
@@ -260,22 +319,22 @@
                 <div class="page-title">Work & Projects</div>
             </div>
             <div class="user-profile">
-                <span id="userEmail">Loading...</span>
+                <span id="userEmail" class="user-email">Loading...</span>
                 <div class="user-avatar">E</div>
             </div>
         </header>
 
         <div class="content">
             
-            <div class="tab-nav">
+            <div class="tab-container">
                 <button class="tab-btn active" onclick="switchTab('tasks')">📋 My Tasks</button>
                 <button class="tab-btn" onclick="switchTab('projects')">🚀 Project Groups</button>
             </div>
 
             <div id="tab-tasks" class="tab-pane active">
                 <div class="card">
-                    <p style="color:#666; margin-top:0; font-size:14px; margin-bottom:20px;">
-                        Update statuses or click <b>"View & Reply"</b> to discuss tasks with admins.
+                    <p style="color:var(--text-grey); margin-top:0; font-size:14px; margin-bottom:25px;">
+                        Update task status or click <b>"View & Reply"</b> to discuss details with your manager.
                     </p>
                     
                     <div class="table-responsive">
@@ -290,7 +349,7 @@
                                 </tr>
                             </thead>
                             <tbody id="myTasksTable">
-                                <tr><td colspan="5" style="text-align:center; padding:20px;">Loading tasks...</td></tr>
+                                <tr><td colspan="5" style="text-align:center; padding:30px; color:#999;">Loading tasks...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -301,12 +360,12 @@
                 <div class="card">
                     <div class="chat-layout">
                         <div class="chat-sidebar">
-                            <h4 style="margin:0 0 10px 0; color:var(--primary-navy);">📂 Select Project</h4>
-                            <select id="empProjectSelect" onchange="loadProjectChat()" style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
+                            <h4 style="margin:0 0 10px 0; color:var(--primary-navy); font-size:15px;">📂 Select Project</h4>
+                            <select id="empProjectSelect" onchange="loadProjectChat()" style="width:100%; padding:12px; border-radius:8px; border:1px solid #e0e0e0; outline:none; font-size:14px;">
                                 <option value="">-- Choose a Project --</option>
                             </select>
-                            <p style="font-size:13px; color:#777; line-height:1.4;">
-                                Select a project to join the group discussion. Only projects you are assigned to will appear here.
+                            <p style="font-size:13px; color:var(--text-grey); line-height:1.5;">
+                                Join the group discussion for projects you are assigned to.
                             </p>
                         </div>
 
@@ -316,11 +375,11 @@
                             </div>
                             
                             <div id="projectChatBox" class="chat-messages">
-                                <div style="text-align:center; color:#ccc; margin-top:50px;">👈 Select a project to start chatting</div>
+                                <div style="text-align:center; color:#ccc; margin-top:80px;">👈 Select a project to start chatting</div>
                             </div>
                             
                             <div id="projInputArea" class="chat-input-area" style="display:none;">
-                                <input type="text" id="projMsgInput" class="chat-input" placeholder="Type a message to the team...">
+                                <input type="text" id="projMsgInput" class="chat-input" placeholder="Type a message...">
                                 <button class="btn-send" onclick="sendProjectMsg()">➤</button>
                             </div>
                         </div>
@@ -340,21 +399,24 @@
             
             <div class="task-details">
                 <h3 id="mTitle">Task Title</h3>
-                <p id="mDesc" style="color:#555; font-size:14px; margin:5px 0;">Description...</p>
+                <p id="mDesc" style="color:var(--text-dark); font-size:14px; margin:8px 0; line-height:1.6;">Description...</p>
                 <div class="task-meta">
                     <span id="mProj">Project: -</span>
                     <span id="mDate">Due: -</span>
                 </div>
-                <div id="mPhotoBox" style="margin-top:10px; display:none;">
-                    <a id="mPhotoLink" href="#" target="_blank" style="color:var(--primary-navy); font-weight:bold; font-size:13px; text-decoration:none;">📎 View Attached Reference</a>
+                <div id="mPhotoBox" style="margin-top:12px; display:none;">
+                    <a id="mPhotoLink" href="#" target="_blank" style="color:var(--primary-navy); font-weight:600; font-size:13px; text-decoration:none; display:flex; align-items:center; gap:5px;">
+                        📎 View Attached Reference
+                    </a>
                 </div>
             </div>
 
             <div class="chat-messages" id="chatMessages" style="background:#fff;">
-                </div>
+                <div style="text-align:center; padding:30px; color:#999;">Loading conversation...</div>
+            </div>
 
             <div class="chat-input-area">
-                <input type="text" id="chatInput" class="chat-input" placeholder="Type a reply or update...">
+                <input type="text" id="chatInput" class="chat-input" placeholder="Type a reply...">
                 <button class="btn-send" onclick="sendReply()">➤</button>
             </div>
         </div>
@@ -370,6 +432,7 @@
             messagingSenderId: "734213881030",
             appId: "1:734213881030:web:bfdcee5a2ff293f87e6bc7"
         };
+        
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
@@ -402,7 +465,6 @@
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             
             document.getElementById('tab-' + tabName).classList.add('active');
-            // Find specific button (hardcoded index for simplicity)
             const btns = document.querySelectorAll('.tab-btn');
             if(tabName === 'tasks') btns[0].classList.add('active');
             else btns[1].classList.add('active');
@@ -414,7 +476,7 @@
             
             db.collection("tasks").where("assignedTo", "==", email).onSnapshot(snap => {
                 if(snap.empty) {
-                    tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:30px; color:#777;'>🎉 No active tasks assigned to you.</td></tr>";
+                    tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:40px; color:#999;'>🎉 No active tasks assigned to you.</td></tr>";
                     return;
                 }
                 
@@ -424,13 +486,12 @@
                     const id = doc.id; 
                     const safeData = encodeURIComponent(JSON.stringify(d));
 
-                    // Status Logic
                     const sP = d.status === 'PENDING' ? 'selected' : '';
                     const sI = d.status === 'IN_PROGRESS' ? 'selected' : '';
                     const sD = d.status === 'DONE' ? 'selected' : '';
 
                     rows += "<tr>";
-                    rows += "<td><b>" + (d.title || "Untitled") + "</b></td>";
+                    rows += "<td><b style='color:var(--primary-navy);'>" + (d.title || "Untitled") + "</b></td>";
                     rows += "<td>" + (d.project || "General") + "</td>";
                     rows += "<td><span class='badge bg-" + (d.priority || "LOW") + "'>" + (d.priority || "LOW") + "</span></td>";
                     rows += "<td>";
@@ -502,7 +563,7 @@
                 .onSnapshot(snap => {
                     chatBox.innerHTML = "";
                     if(snap.empty) {
-                        chatBox.innerHTML = "<div style='text-align:center; color:#ccc; margin-top:20px;'>No messages yet. Say hello! 👋</div>";
+                        chatBox.innerHTML = "<div style='text-align:center; color:#ccc; margin-top:40px;'>No messages yet. Say hello! 👋</div>";
                     }
                     
                     snap.forEach(doc => {
@@ -556,14 +617,14 @@
 
         function loadTaskChat(taskId) {
             const chatBox = document.getElementById("chatMessages");
-            chatBox.innerHTML = "<div style='text-align:center; padding:20px; color:#999'>Loading updates...</div>";
+            chatBox.innerHTML = "<div style='text-align:center; padding:30px; color:#999'>Loading updates...</div>";
             
             if(chatListener) chatListener();
             
             chatListener = db.collection("tasks").doc(taskId).collection("replies").orderBy("timestamp", "asc").onSnapshot(snap => {
                 chatBox.innerHTML = "";
                 if(snap.empty) {
-                    chatBox.innerHTML = "<div style='text-align:center; padding:20px; color:#ccc'>No discussions yet.</div>";
+                    chatBox.innerHTML = "<div style='text-align:center; padding:30px; color:#ccc'>No discussions yet.</div>";
                     return;
                 }
                 
@@ -571,13 +632,11 @@
                     const m = doc.data();
                     const isMine = m.email === currentUserEmail;
                     const bubbleClass = isMine ? "msg-mine" : "msg-other";
-                    const sender = isMine ? "Me" : (m.role === 'admin' ? "Admin" : "User");
-                    const time = m.timestamp ? new Date(m.timestamp.seconds * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : "";
+                    const sender = isMine ? "Me" : (m.role === 'admin' ? "Admin" : "Manager");
 
                     let html = "<div class='msg-bubble " + bubbleClass + "'>";
                     if(!isMine) html += "<span class='msg-sender'>" + sender + "</span>";
                     html += m.message;
-                    html += "<span class='msg-info'>" + time + "</span>";
                     html += "</div>";
                     
                     chatBox.innerHTML += html;
@@ -603,6 +662,7 @@
         }
 
         function logout() { auth.signOut().then(() => window.location.href = "index.html"); }
+        function toggleSidebar() { document.getElementById("sidebar").classList.toggle("open"); }
     </script>
 </body>
 </html>
