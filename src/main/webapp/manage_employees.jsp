@@ -9,227 +9,167 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Employees - Synod Bioscience</title>
+    <title>Employee Management - Synod Bioscience</title>
     
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
     <style>
-        /* --- 1. RESET & VARS --- */
+        /* --- 1. RESET & CORE THEME --- */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        
         :root {
             --primary-navy: #1a3b6e;
+            --primary-dark: #122b52;
             --primary-green: #2ecc71;
-            --bg-light: #f4f6f9;
-            --text-dark: #333;
-            --text-grey: #666;
-            --sidebar-width: 260px;
+            --bg-light: #f0f2f5;
+            --text-dark: #2c3e50;
+            --text-grey: #7f8c8d;
+            --sidebar-width: 280px;
+            --card-shadow: 0 4px 20px rgba(0,0,0,0.05);
         }
 
         body { display: flex; height: 100vh; background-color: var(--bg-light); overflow: hidden; }
 
-        /* --- 2. SIDEBAR --- */
-        .sidebar {
-            width: var(--sidebar-width);
-            background-color: var(--primary-navy);
-            color: white;
-            display: flex;
-            flex-direction: column;
-            transition: width 0.3s;
-            flex-shrink: 0;
+        /* --- 2. SIDEBAR (Standardized) --- */
+        .sidebar { 
+            width: var(--sidebar-width); 
+            background: linear-gradient(180deg, var(--primary-navy) 0%, var(--primary-dark) 100%);
+            color: white; 
+            display: flex; flex-direction: column; flex-shrink: 0; 
+            transition: all 0.3s ease; z-index: 1000;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.1);
         }
-
-        .sidebar-header {
-            padding: 20px;
-            background-color: rgba(0,0,0,0.1);
-            text-align: center;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .sidebar-logo {
-            max-width: 140px;
-            height: auto;
-            margin-bottom: 10px;
-            filter: brightness(0) invert(1);
-        }
+        .sidebar-header { padding: 30px 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.1); }
+        .sidebar-logo { max-width: 130px; margin-bottom: 15px; filter: brightness(0) invert(1) drop-shadow(0 4px 6px rgba(0,0,0,0.2)); }
+        .sidebar-brand { font-size: 13px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; opacity: 0.9; }
         
-        .sidebar-brand { font-size: 14px; opacity: 0.8; letter-spacing: 1px; text-transform: uppercase; }
-
-        .nav-menu {
-            list-style: none;
-            padding: 20px 0;
-            flex: 1;
-            overflow-y: auto;
-        }
-
-        .nav-item a {
-            display: flex;
-            align-items: center;
-            padding: 15px 25px;
-            color: #bdc3c7;
-            text-decoration: none;
-            font-size: 15px;
-            transition: all 0.3s;
-            border-left: 4px solid transparent;
-        }
-
-        .nav-item a:hover, .nav-item a.active {
-            background-color: rgba(255,255,255,0.05);
-            color: white;
-            border-left-color: var(--primary-green);
-        }
-
+        .nav-menu { list-style: none; padding: 20px 15px; flex: 1; overflow-y: auto; }
+        .nav-item { margin-bottom: 8px; }
+        .nav-item a { display: flex; align-items: center; padding: 14px 20px; color: #bdc3c7; text-decoration: none; font-size: 15px; font-weight: 500; border-radius: 10px; transition: all 0.2s; }
+        .nav-item a:hover { background: rgba(255,255,255,0.08); color: white; transform: translateX(5px); }
+        .nav-item a.active { background: var(--primary-green); color: white; box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4); }
         .nav-icon { margin-right: 15px; font-size: 18px; width: 25px; text-align: center; }
-
-        .sidebar-footer { padding: 20px; border-top: 1px solid rgba(255,255,255,0.1); }
-        .btn-logout {
-            width: 100%;
-            padding: 12px;
-            background-color: rgba(231, 76, 60, 0.8);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.3s;
-            display: flex; align-items: center; justify-content: center; gap: 10px;
-        }
-        .btn-logout:hover { background-color: #c0392b; }
+        
+        .sidebar-footer { padding: 25px; border-top: 1px solid rgba(255,255,255,0.05); }
+        .btn-logout { width: 100%; padding: 14px; background: rgba(231, 76, 60, 0.9); color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.2s; box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3); }
+        .btn-logout:hover { background: #c0392b; transform: translateY(-2px); }
 
         /* --- 3. MAIN CONTENT --- */
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-        }
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; position: relative; }
+        .topbar { background: white; height: 70px; display: flex; justify-content: space-between; align-items: center; padding: 0 40px; box-shadow: 0 2px 15px rgba(0,0,0,0.03); position: sticky; top: 0; z-index: 50; }
+        .page-title { font-size: 22px; font-weight: 700; color: var(--primary-navy); letter-spacing: -0.5px; }
+        
+        .user-profile { display: flex; align-items: center; gap: 15px; background: #f8f9fa; padding: 8px 15px; border-radius: 30px; border: 1px solid #e9ecef; }
+        .user-avatar { width: 36px; height: 36px; background: var(--primary-navy); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; }
 
-        /* Top Bar */
-        .topbar {
-            background: white;
-            height: 60px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            position: sticky; top: 0; z-index: 100;
-        }
+        .content { padding: 30px 40px; max-width: 1600px; margin: 0 auto; width: 100%; }
 
-        .page-title { font-size: 20px; font-weight: bold; color: var(--primary-navy); }
-        .user-profile { font-size: 14px; color: var(--text-grey); display: flex; align-items: center; gap: 10px; }
-        .user-avatar { width: 35px; height: 35px; background: #e0e0e0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: var(--primary-navy); }
-
-        /* --- 4. PAGE SPECIFIC STYLES --- */
-        .content { padding: 30px; max-width: 1400px; margin: 0 auto; width: 100%; }
-
-        /* Tabs */
-        .tab-container { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 2px solid #e0e0e0; padding-bottom: 15px; }
+        /* --- 4. TABS & GRID --- */
+        .tab-header { display: flex; gap: 15px; margin-bottom: 25px; border-bottom: 1px solid #e0e0e0; padding-bottom: 15px; }
         .tab-btn { 
-            padding: 12px 25px; border: none; background: #fff; color: #555; 
-            cursor: pointer; border-radius: 6px; font-weight: bold; font-size: 14px; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: 0.3s;
+            padding: 10px 25px; border: 1px solid #e0e0e0; background: white; 
+            border-radius: 30px; cursor: pointer; font-weight: 600; color: #7f8c8d; 
+            transition: 0.2s; display: flex; align-items: center; gap: 8px;
         }
-        .tab-btn.active { background: var(--primary-navy); color: white; transform: translateY(-2px); }
+        .tab-btn.active { background: var(--primary-navy); color: white; border-color: var(--primary-navy); box-shadow: 0 4px 10px rgba(26, 59, 110, 0.2); }
+        
         .tab-content { display: none; }
-        .tab-content.active { display: flex; gap: 30px; flex-wrap: wrap; }
+        .tab-content.active { display: flex; gap: 25px; flex-wrap: wrap; }
+
+        /* Two Column Layout */
+        .col-left { flex: 1; min-width: 350px; display: flex; flex-direction: column; gap: 25px; }
+        .col-right { flex: 1.5; min-width: 450px; display: flex; flex-direction: column; gap: 25px; }
 
         /* Cards */
-        .card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .half-width { flex: 1; min-width: 320px; }
-        
-        h3 { margin-top: 0; color: var(--primary-navy); border-bottom: 2px solid #f4f6f9; padding-bottom: 12px; margin-bottom: 20px; }
+        .card { background: white; border-radius: 16px; padding: 30px; box-shadow: var(--card-shadow); display: flex; flex-direction: column; border: 1px solid white; }
+        .card-header { font-size: 18px; font-weight: 700; color: var(--primary-navy); margin-bottom: 20px; border-bottom: 1px solid #f0f0f0; padding-bottom: 15px; }
 
-        /* Forms */
-        label { font-weight: 600; font-size: 13px; color: #555; display: block; margin-top: 15px; text-transform: uppercase; }
-        input, select, textarea { 
-            width: 100%; padding: 12px; margin-top: 8px; 
-            border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px;
-        }
-        input:focus, select:focus, textarea:focus { border-color: var(--primary-navy); outline: none; }
-        textarea { height: 100px; resize: vertical; }
+        /* Form Elements */
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-size: 12px; font-weight: 700; color: #333; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 14px; background: #f9f9f9; transition: 0.2s; }
+        input:focus, select:focus, textarea:focus { border-color: var(--primary-navy); background: white; outline: none; box-shadow: 0 0 0 3px rgba(26, 59, 110, 0.1); }
+        textarea { resize: vertical; height: 100px; }
 
-        /* Action Buttons */
-        .btn-action { margin-top: 20px; padding: 14px; width: 100%; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-green { background: var(--primary-green); }
-        .btn-green:hover { background: #27ae60; }
-        .btn-blue { background: #3498db; }
-        .btn-blue:hover { background: #2980b9; }
-        .btn-red { background: #e74c3c; margin-top: 10px; }
-        .btn-secondary { background: #95a5a6; margin-top: 10px; }
+        .row { display: flex; gap: 15px; }
+        .col { flex: 1; }
 
-        /* Directory Table */
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th { background: #f8f9fa; color: #666; padding: 12px; text-align: left; font-size: 13px; text-transform: uppercase; border-bottom: 2px solid #eee; }
-        td { padding: 12px; border-bottom: 1px solid #f1f1f1; color: #444; font-size: 14px; }
-        tr:hover { background: #fafafa; }
+        /* Buttons */
+        .btn-action { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: 700; color: white; cursor: pointer; transition: 0.2s; margin-top: 10px; font-size: 14px; }
+        .btn-green { background: var(--primary-green); box-shadow: 0 4px 10px rgba(46, 204, 113, 0.3); }
+        .btn-green:hover { background: #27ae60; transform: translateY(-2px); }
+        .btn-blue { background: var(--primary-navy); box-shadow: 0 4px 10px rgba(26, 59, 110, 0.3); }
+        .btn-blue:hover { background: #132c52; transform: translateY(-2px); }
+        .btn-red { background: #e74c3c; box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3); }
+        .btn-red:hover { background: #c0392b; }
+        .btn-gray { background: #95a5a6; color: white; }
 
-        /* Employee Checkbox List */
-        .emp-checkbox-list { max-height: 250px; overflow-y: auto; border: 1px solid #eee; padding: 10px; margin-top: 8px; background: #fff; border-radius: 6px; }
-        .emp-item { display: flex; align-items: center; gap: 10px; padding: 8px; border-bottom: 1px solid #f9f9f9; }
-        .emp-item:hover { background: #f4f6f9; }
+        /* Table */
+        .table-wrap { overflow-x: auto; border-radius: 8px; border: 1px solid #f0f0f0; }
+        table { width: 100%; border-collapse: collapse; min-width: 500px; }
+        th { background: #f8f9fa; text-align: left; padding: 15px; font-size: 12px; color: #7f8c8d; font-weight: 700; text-transform: uppercase; border-bottom: 2px solid #eee; }
+        td { padding: 15px; font-size: 14px; border-bottom: 1px solid #f9f9f9; color: #333; }
+        tr:hover td { background: #fcfcfc; }
+
+        /* Member List Checkboxes */
+        .member-list { border: 1px solid #e0e0e0; padding: 12px; max-height: 250px; overflow-y: auto; border-radius: 8px; background: #fcfcfc; }
+        .emp-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; transition: 0.2s; }
+        .emp-item:hover { background: #f0f2f5; }
+        .emp-item input { width: 18px; height: 18px; margin: 0; cursor: pointer; accent-color: var(--primary-navy); }
+        .emp-item span { font-size: 14px; font-weight: 500; color: #333; }
 
         /* Chat Styles */
-        .chat-box { border: 1px solid #eee; height: 350px; overflow-y: auto; background: #fdfdfd; padding: 15px; border-radius: 6px; margin-top: 15px; display: flex; flex-direction: column; gap: 12px; }
-        .chat-msg { padding: 10px 14px; border-radius: 12px; max-width: 80%; font-size: 13px; line-height: 1.5; }
-        .msg-mine { background: #e3f2fd; align-self: flex-end; border-bottom-right-radius: 2px; }
-        .msg-other { background: #f1f1f1; align-self: flex-start; border-bottom-left-radius: 2px; }
+        .chat-container { border: 1px solid #eee; background: #fdfdfd; border-radius: 12px; height: 450px; display: flex; flex-direction: column; overflow: hidden; }
+        .chat-header-bar { padding: 15px; border-bottom: 1px solid #eee; background: #fff; font-weight: 600; color: var(--primary-navy); display: flex; align-items: center; gap: 10px; font-size: 14px; }
+        .chat-box { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+        .chat-msg { padding: 12px 16px; border-radius: 12px; max-width: 80%; font-size: 13px; line-height: 1.5; box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
+        .msg-mine { background: var(--primary-navy); color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
+        .msg-other { background: white; border: 1px solid #eee; align-self: flex-start; border-bottom-left-radius: 2px; color: #333; }
+        .chat-input-row { padding: 15px; background: #fff; border-top: 1px solid #eee; display: flex; gap: 10px; }
+        .chat-input-row input { margin: 0; border-radius: 30px; padding-left: 20px; }
 
-        #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; font-size: 24px; color: #333; flex-direction: column; gap: 10px; }
+        /* Project Select Box */
+        .project-select-wrapper { background: #e3f2fd; padding: 20px; border-radius: 10px; border: 1px solid #bbdefb; margin-bottom: 20px; }
+        .project-select-wrapper h4 { margin: 0 0 10px 0; color: #1565c0; font-size: 13px; font-weight: 700; text-transform: uppercase; }
 
-        /* Responsive */
-        @media (max-width: 900px) {
-            .sidebar { position: absolute; left: -260px; height: 100%; z-index: 200; }
-            .sidebar.open { left: 0; }
-            .toggle-btn { display: block; margin-right: 15px; cursor: pointer; font-size: 24px; }
+        /* Loader */
+        #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--primary-navy); font-weight: 600; }
+
+        @media (max-width: 1024px) {
+            .sidebar { position: fixed; left: -280px; height: 100%; }
+            .sidebar.active { transform: translateX(280px); }
+            .content { padding: 20px; }
+            .tab-content.active { flex-direction: column; }
+            .toggle-btn { display: block; font-size: 24px; cursor: pointer; margin-right: 15px; }
         }
-        @media (min-width: 901px) { .toggle-btn { display: none; } }
+        @media (min-width: 1025px) { .toggle-btn { display: none; } }
     </style>
-
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
     <div id="loadingOverlay">
-        <div style="font-size: 40px; margin-bottom: 10px;">👥</div>
-        <div>Loading Employee Data...</div>
+        <div style="font-size: 50px;">👥</div>
+        <div style="margin-top:15px;">Loading Data...</div>
     </div>
 
     <nav class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <img src="synod_logo.png" alt="Synod Logo" class="sidebar-logo">
+            <img src="synod_logo.png" alt="Logo" class="sidebar-logo">
             <div class="sidebar-brand">ADMIN PORTAL</div>
         </div>
-
         <ul class="nav-menu">
-            <li class="nav-item">
-                <a href="admin_homepage.html"><span class="nav-icon">🏠</span> Home</a>
-            </li>
-            <li class="nav-item">
-                <a href="admin_dashboard.jsp"><span class="nav-icon">📊</span> Live Dashboard</a>
-            </li>
-            <li class="nav-item">
-                <a href="manage_employees.jsp" class="active"><span class="nav-icon">👥</span> Employees</a>
-            </li>
-            <li class="nav-item">
-                <a href="admin_task_monitoring.jsp"><span class="nav-icon">📝</span> Tasks</a>
-            </li>
-            <li class="nav-item">
-                <a href="reports.jsp"><span class="nav-icon">📅</span> Attendance</a>
-            </li>
-            <li class="nav-item">
-                <a href="admin_expenses.jsp"><span class="nav-icon">💸</span> Expenses</a>
-            </li>
-             <li class="nav-item">
-                <a href="payroll.jsp"><span class="nav-icon">💰</span> Payroll</a>
-            </li>
-            <li class="nav-item">
-                <a href="admin_settings.jsp"><span class="nav-icon">⚙️</span> Settings</a>
-            </li>
+            <li class="nav-item"><a href="admin_homepage.html"><span class="nav-icon">🏠</span> Home</a></li>
+            <li class="nav-item"><a href="admin_dashboard.jsp"><span class="nav-icon">📊</span> Live Dashboard</a></li>
+            <li class="nav-item"><a href="manage_employees.jsp" class="active"><span class="nav-icon">👥</span> Employees</a></li>
+            <li class="nav-item"><a href="admin_task_monitoring.jsp"><span class="nav-icon">📝</span> Tasks</a></li>
+            <li class="nav-item"><a href="reports.jsp"><span class="nav-icon">📅</span> Attendance</a></li>
+            <li class="nav-item"><a href="admin_expenses.jsp"><span class="nav-icon">💸</span> Expenses</a></li>
+            <li class="nav-item"><a href="payroll.jsp"><span class="nav-icon">💰</span> Payroll</a></li>
+            <li class="nav-item"><a href="admin_settings.jsp"><span class="nav-icon">⚙️</span> Settings</a></li>
         </ul>
-
         <div class="sidebar-footer">
-            <button onclick="logout()" class="btn-logout"><span>🚪</span> Sign Out</button>
+            <button onclick="logout()" class="btn-logout">Sign Out</button>
         </div>
     </nav>
 
@@ -247,129 +187,144 @@
 
         <div class="content">
             
-            <div class="tab-container">
-                <button class="tab-btn active" onclick="switchTab('individual')">👤 Individual Tasks</button>
+            <div class="tab-header">
+                <button class="tab-btn active" onclick="switchTab('individual')">👤 Assign Tasks</button>
                 <button class="tab-btn" onclick="switchTab('project')">🚀 Project Groups</button>
             </div>
 
             <div id="tab-individual" class="tab-content active">
                 
-                <div class="card half-width">
-                    <h3>📝 Assign New Task</h3>
-                    <label>Select Employee</label>
-                    <select id="empSelect">
-                        <option value="">-- Choose Employee --</option>
-                    </select>
-
-                    <label>Task Title</label>
-                    <input type="text" id="taskTitle" placeholder="e.g. Site Inspection">
-                    
-                    <label>Description</label>
-                    <textarea id="taskDesc" placeholder="Enter detailed instructions..."></textarea>
-
-                    <div style="display:flex; gap:15px;">
-                        <div style="flex:1">
-                            <label>Project Name</label>
-                            <input type="text" id="taskProject" placeholder="General">
+                <div class="col-left">
+                    <div class="card">
+                        <div class="card-header">📝 Assign New Task</div>
+                        
+                        <div class="form-group">
+                            <label>Select Employee</label>
+                            <select id="empSelect"><option value="">-- Choose Employee --</option></select>
                         </div>
-                        <div style="flex:1">
-                            <label>Priority</label>
-                            <select id="taskPriority">
-                                <option value="LOW">Low</option>
-                                <option value="MEDIUM" selected>Medium</option>
-                                <option value="HIGH">High</option>
-                            </select>
+
+                        <div class="form-group">
+                            <label>Task Title</label>
+                            <input type="text" id="taskTitle" placeholder="e.g. Weekly Site Inspection">
                         </div>
+
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea id="taskDesc" placeholder="Enter detailed instructions..."></textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col">
+                                <label>Project Name</label>
+                                <input type="text" id="taskProject" placeholder="General">
+                            </div>
+                            <div class="col">
+                                <label>Priority</label>
+                                <select id="taskPriority">
+                                    <option value="LOW">Low</option>
+                                    <option value="MEDIUM" selected>Medium</option>
+                                    <option value="HIGH">High</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row" style="margin-top:10px;">
+                            <div class="col">
+                                <label>Due Date</label>
+                                <input type="date" id="taskDate">
+                            </div>
+                            <div class="col">
+                                <label>Image (Optional)</label>
+                                <input type="file" id="taskFile" accept="image/*" style="background:white; padding:9px;">
+                            </div>
+                        </div>
+
+                        <button onclick="assignTask()" id="assignBtn" class="btn-action btn-green">Assign Task</button>
                     </div>
-                    
-                    <div style="display:flex; gap:15px;">
-                        <div style="flex:1">
-                            <label>Due Date</label>
-                            <input type="date" id="taskDate">
-                        </div>
-                        <div style="flex:1">
-                            <label>Reference Image (Optional)</label>
-                            <input type="file" id="taskFile" accept="image/*" style="padding:9px;">
-                        </div>
-                    </div>
-
-                    <button onclick="assignTask()" id="assignBtn" class="btn-action btn-green">Assign Task</button>
                 </div>
 
-                <div class="card half-width">
-                    <h3>👥 Employee Directory</h3>
-                    <table>
-                        <thead><tr><th>Name</th><th>Email</th><th>Contact</th></tr></thead>
-                        <tbody id="empTableBody"><tr><td colspan="3">Loading...</td></tr></tbody>
-                    </table>
+                <div class="col-right">
+                    <div class="card" style="height:100%;">
+                        <div class="card-header">👥 Employee Directory</div>
+                        <div class="table-wrap">
+                            <table>
+                                <thead><tr><th>Name</th><th>Email</th><th>Contact</th></tr></thead>
+                                <tbody id="empTableBody"><tr><td colspan="3" style="text-align:center;">Loading...</td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <div id="tab-project" class="tab-content">
                 
-                <div class="card half-width" style="flex: 0.8;">
-                    <h3>📂 Project Management</h3>
-                    
-                    <div style="background:#e3f2fd; padding:15px; border-radius:6px; border:1px solid #bbdefb; margin-bottom:20px;">
-                        <h4 style="margin:0 0 10px 0; color:#1565c0;">Select Active Project</h4>
-                        <select id="projectSelect" onchange="handleProjectChange()" style="margin:0;">
-                            <option value="">-- CREATE NEW PROJECT --</option>
-                        </select>
-                    </div>
-
-                    <div id="createMode">
-                        <h4 style="margin-bottom:15px; padding-top:10px; border-top:1px solid #eee;">Create New Group</h4>
-                        <label>New Project Name</label>
-                        <input type="text" id="newProjName" placeholder="e.g. Alpha Team">
+                <div class="col-left">
+                    <div class="card">
+                        <div class="card-header">📂 Project Settings</div>
                         
-                        <label>Select Members</label>
-                        <div id="createCheckboxes" class="emp-checkbox-list"></div>
-                        
-                        <button class="btn-action btn-blue" onclick="createProject()">Create Project Group</button>
-                    </div>
+                        <div class="project-select-wrapper">
+                            <h4>Select Active Project</h4>
+                            <select id="projectSelect" onchange="handleProjectChange()" style="background:white; margin:0;">
+                                <option value="">-- CREATE NEW PROJECT --</option>
+                            </select>
+                        </div>
 
-                    <div id="editMode" style="display:none;">
-                        <h4 style="margin-bottom:15px; padding-top:10px; border-top:1px solid #eee;">
-                            Edit Project: <span id="editProjTitle" style="color:#2980b9"></span>
-                        </h4>
-                        
-                        <label>Project Name</label>
-                        <input type="text" id="editProjName">
+                        <div id="createMode">
+                            <div class="form-group">
+                                <label>New Project Name</label>
+                                <input type="text" id="newProjName" placeholder="e.g. Alpha Team">
+                            </div>
+                            <div class="form-group">
+                                <label>Select Members</label>
+                                <div id="createCheckboxes" class="member-list"></div>
+                            </div>
+                            <button onclick="createProject()" class="btn-action btn-blue">Create Group</button>
+                        </div>
 
-                        <label>Manage Members</label>
-                        <div id="editCheckboxes" class="emp-checkbox-list"></div>
-
-                        <button class="btn-action btn-blue" onclick="updateProject()">💾 Save Changes</button>
-                        <button class="btn-action btn-red" onclick="deleteProject()">🗑️ Delete Project</button>
-                        <button class="btn-action btn-secondary" onclick="resetToCreateMode()">❌ Cancel</button>
+                        <div id="editMode" style="display:none;">
+                            <div class="form-group">
+                                <label>Project Name</label>
+                                <input type="text" id="editProjName">
+                            </div>
+                            <div class="form-group">
+                                <label>Manage Members</label>
+                                <div id="editCheckboxes" class="member-list"></div>
+                            </div>
+                            <div class="row">
+                                <div class="col"><button onclick="updateProject()" class="btn-action btn-blue">Save Changes</button></div>
+                                <div class="col"><button onclick="deleteProject()" class="btn-action btn-red">Delete</button></div>
+                            </div>
+                            <button onclick="resetToCreateMode()" class="btn-action btn-gray">Cancel Edit</button>
+                        </div>
                     </div>
                 </div>
 
-                <div class="card half-width">
-                    <h3>💬 Group Broadcast</h3>
-                    <div id="chatContainer" style="display:none;">
-                        <div style="font-size:12px; color:#666; margin-bottom:5px;">
-                            Broadcasting to: <b id="chatProjName"></b>
+                <div class="col-right">
+                    <div class="card" style="height:100%;">
+                        <div class="card-header">💬 Group Chat</div>
+                        <div id="chatContainer" class="chat-container" style="display:none;">
+                            <div class="chat-header-bar">
+                                <span style="font-size:18px;">📢</span> 
+                                Broadcasting to: <strong id="chatProjName" style="margin-left:5px;"></strong>
+                            </div>
+                            <div id="projectChatBox" class="chat-box"></div>
+                            <div class="chat-input-row">
+                                <input type="text" id="projMsgInput" placeholder="Type a message..." style="flex:1;">
+                                <button onclick="sendProjectMsg()" class="btn-action btn-green" style="width:auto; margin:0; padding:0 25px; border-radius:30px;">➤</button>
+                            </div>
                         </div>
-                        <div id="projectChatBox" class="chat-box"></div>
-                        
-                        <div style="display:flex; gap:10px; margin-top:15px;">
-                            <input type="text" id="projMsgInput" placeholder="Type a message to the group..." style="margin:0;">
-                            <button style="margin:0; width:auto; padding:0 25px;" class="btn-action btn-green" onclick="sendProjectMsg()">Send</button>
+                        <div id="noProjectMsg" style="text-align:center; color:#999; margin-top:80px;">
+                            <div style="font-size:40px; margin-bottom:15px; opacity:0.3;">👈</div>
+                            <p>Select a project from the left panel to open the group chat.</p>
                         </div>
-                    </div>
-                    <div id="noProjectMsg" style="text-align:center; color:#999; margin-top:80px;">
-                        <div style="font-size:40px; margin-bottom:10px;">👈</div>
-                        Select a project from the left panel to open the chat.
                     </div>
                 </div>
-
             </div>
 
         </div>
     </div>
 
-    <script>
+     <script>
         // --- 1. CONFIG ---
         const firebaseConfig = {
             apiKey: "AIzaSyBzdM77WwTSkxvF0lsxf2WLNLhjuGyNvQQ",

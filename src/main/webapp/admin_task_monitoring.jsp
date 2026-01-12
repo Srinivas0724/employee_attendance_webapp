@@ -11,222 +11,146 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Task Monitoring - Synod Bioscience</title>
     
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
     <style>
-        /* --- 1. RESET & VARS --- */
+        /* --- 1. RESET & CORE THEME --- */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        
         :root {
             --primary-navy: #1a3b6e;
+            --primary-dark: #122b52;
             --primary-green: #2ecc71;
-            --bg-light: #f4f6f9;
-            --text-dark: #333;
-            --text-grey: #666;
-            --sidebar-width: 260px;
+            --bg-light: #f0f2f5;
+            --text-dark: #2c3e50;
+            --text-grey: #7f8c8d;
+            --sidebar-width: 280px;
+            --card-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
 
         body { display: flex; height: 100vh; background-color: var(--bg-light); overflow: hidden; }
 
         /* --- 2. SIDEBAR --- */
-        .sidebar {
-            width: var(--sidebar-width);
-            background-color: var(--primary-navy);
-            color: white;
-            display: flex;
-            flex-direction: column;
-            transition: width 0.3s;
-            flex-shrink: 0;
+        .sidebar { 
+            width: var(--sidebar-width); 
+            background: linear-gradient(180deg, var(--primary-navy) 0%, var(--primary-dark) 100%);
+            color: white; 
+            display: flex; flex-direction: column; flex-shrink: 0; 
+            transition: all 0.3s ease; z-index: 1000;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.1);
         }
-
-        .sidebar-header {
-            padding: 20px;
-            background-color: rgba(0,0,0,0.1);
-            text-align: center;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .sidebar-logo {
-            max-width: 140px;
-            height: auto;
-            margin-bottom: 10px;
-            filter: brightness(0) invert(1);
-        }
+        .sidebar-header { padding: 30px 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.1); }
+        .sidebar-logo { max-width: 130px; margin-bottom: 15px; filter: brightness(0) invert(1) drop-shadow(0 4px 6px rgba(0,0,0,0.2)); }
+        .sidebar-brand { font-size: 13px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; opacity: 0.9; }
         
-        .sidebar-brand { font-size: 14px; opacity: 0.8; letter-spacing: 1px; text-transform: uppercase; }
-
-        .nav-menu {
-            list-style: none;
-            padding: 20px 0;
-            flex: 1;
-            overflow-y: auto;
-        }
-
-        .nav-item a {
-            display: flex;
-            align-items: center;
-            padding: 15px 25px;
-            color: #bdc3c7;
-            text-decoration: none;
-            font-size: 15px;
-            transition: all 0.3s;
-            border-left: 4px solid transparent;
-        }
-
-        .nav-item a:hover, .nav-item a.active {
-            background-color: rgba(255,255,255,0.05);
-            color: white;
-            border-left-color: var(--primary-green);
-        }
-
+        .nav-menu { list-style: none; padding: 20px 15px; flex: 1; overflow-y: auto; }
+        .nav-item { margin-bottom: 8px; }
+        .nav-item a { display: flex; align-items: center; padding: 14px 20px; color: #bdc3c7; text-decoration: none; font-size: 15px; font-weight: 500; border-radius: 10px; transition: all 0.2s; }
+        .nav-item a:hover { background: rgba(255,255,255,0.08); color: white; transform: translateX(5px); }
+        .nav-item a.active { background: var(--primary-green); color: white; box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4); }
         .nav-icon { margin-right: 15px; font-size: 18px; width: 25px; text-align: center; }
-
-        .sidebar-footer { padding: 20px; border-top: 1px solid rgba(255,255,255,0.1); }
-        .btn-logout {
-            width: 100%;
-            padding: 12px;
-            background-color: rgba(231, 76, 60, 0.8);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.3s;
-            display: flex; align-items: center; justify-content: center; gap: 10px;
-        }
-        .btn-logout:hover { background-color: #c0392b; }
+        
+        .sidebar-footer { padding: 25px; border-top: 1px solid rgba(255,255,255,0.05); }
+        .btn-logout { width: 100%; padding: 14px; background: rgba(231, 76, 60, 0.9); color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.2s; box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3); }
+        .btn-logout:hover { background: #c0392b; transform: translateY(-2px); }
 
         /* --- 3. MAIN CONTENT --- */
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-        }
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; position: relative; }
+        .topbar { background: white; height: 70px; display: flex; justify-content: space-between; align-items: center; padding: 0 40px; box-shadow: 0 2px 15px rgba(0,0,0,0.03); position: sticky; top: 0; z-index: 50; }
+        .page-title { font-size: 22px; font-weight: 700; color: var(--primary-navy); letter-spacing: -0.5px; }
+        .user-profile { display: flex; align-items: center; gap: 15px; background: #f8f9fa; padding: 8px 15px; border-radius: 30px; border: 1px solid #e9ecef; }
+        .user-avatar { width: 36px; height: 36px; background: var(--primary-navy); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; }
 
-        /* Top Bar */
-        .topbar {
-            background: white;
-            height: 60px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            position: sticky; top: 0; z-index: 100;
-        }
+        .content { padding: 30px 40px; max-width: 1400px; margin: 0 auto; width: 100%; }
 
-        .page-title { font-size: 20px; font-weight: bold; color: var(--primary-navy); }
-        .user-profile { font-size: 14px; color: var(--text-grey); display: flex; align-items: center; gap: 10px; }
-        .user-avatar { width: 35px; height: 35px; background: #e0e0e0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: var(--primary-navy); }
-
-        /* --- 4. PAGE SPECIFIC STYLES --- */
-        .content { padding: 30px; max-width: 1400px; margin: 0 auto; width: 100%; }
-
-        .card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        /* --- 4. TASK TABLE CARD --- */
+        .card { background: white; padding: 30px; border-radius: 16px; box-shadow: var(--card-shadow); border: 1px solid white; display: flex; flex-direction: column; }
+        .card h3 { margin: 0 0 10px 0; font-size: 18px; font-weight: 700; color: var(--primary-navy); }
         
-        h3 { margin-top: 0; color: var(--primary-navy); border-bottom: 2px solid #f4f6f9; padding-bottom: 12px; margin-bottom: 20px; }
+        /* Table Styles */
+        .table-wrap { overflow-x: auto; border-radius: 8px; border: 1px solid #f0f0f0; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th { background: #f8f9fa; padding: 15px; text-align: left; font-size: 12px; color: var(--text-grey); font-weight: 700; text-transform: uppercase; border-bottom: 2px solid #eee; }
+        td { padding: 15px; border-bottom: 1px solid #f9f9f9; font-size: 14px; color: var(--text-dark); vertical-align: middle; }
+        tr:hover td { background: #fcfcfc; }
 
-        /* Table */
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th { background: #f8f9fa; color: #666; padding: 12px; text-align: left; font-size: 13px; text-transform: uppercase; border-bottom: 2px solid #eee; }
-        td { padding: 12px; border-bottom: 1px solid #f1f1f1; color: #444; font-size: 14px; vertical-align: middle; }
-        tr:hover { background: #fafafa; }
+        /* Status Badges */
+        .badge { padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-block; text-transform: uppercase; letter-spacing: 0.5px; }
+        .PENDING { background: #ffebee; color: #c0392b; }
+        .IN_PROGRESS { background: #fff3cd; color: #f39c12; }
+        .COMPLETED { background: #e8f5e9; color: #27ae60; }
 
-        /* Badges */
-        .badge { padding: 5px 10px; border-radius: 6px; color: white; font-size: 11px; font-weight: bold; display: inline-block; }
-        .PENDING { background: #e74c3c; }
-        .IN_PROGRESS { background: #f39c12; }
-        .DONE { background: #27ae60; }
+        /* Action Button */
+        .btn-chat { background: var(--primary-navy); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; transition: 0.2s; display: inline-flex; align-items: center; gap: 5px; }
+        .btn-chat:hover { background: #132c52; transform: translateY(-1px); }
 
-        /* Chat Button */
-        .btn-chat { background: #3498db; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
-        .btn-chat:hover { background: #2980b9; }
+        /* --- 5. MODAL (Standardized) --- */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-content { background: white; width: 700px; max-width: 95%; height: 85vh; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.2); }
 
-        /* --- MODAL --- */
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center; }
-        .modal-content { background-color: #fff; width: 600px; max-width: 90%; height: 85vh; border-radius: 10px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .modal-header { background: white; padding: 20px 25px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
+        .modal-title { font-size: 18px; font-weight: 700; color: var(--primary-navy); }
+        .close-btn { background: #f8f9fa; border: none; color: #666; width: 32px; height: 32px; border-radius: 50%; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .close-btn:hover { background: #e74c3c; color: white; }
 
-        .modal-header { background: var(--primary-navy); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
-        .modal-title { font-size: 16px; font-weight: bold; }
-        .close-btn { background: none; border: none; color: white; font-size: 20px; cursor: pointer; opacity: 0.8; }
-        .close-btn:hover { opacity: 1; }
+        .modal-body { flex: 1; padding: 25px; overflow-y: auto; background: #f9f9f9; display: flex; flex-direction: column; gap: 20px; }
 
-        .modal-body { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; background: #f8f9fa; }
+        /* Task Details Box */
+        .task-box { background: white; padding: 20px; border-radius: 12px; border: 1px solid #eee; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+        .task-box h3 { margin: 0 0 5px 0; color: var(--text-dark); font-size: 16px; }
+        .task-meta { font-size: 13px; color: var(--text-grey); margin-bottom: 15px; display: flex; gap: 15px; }
+        .task-desc { color: #555; font-size: 14px; line-height: 1.6; }
 
-        .task-info-box { background: white; padding: 20px; border-radius: 8px; border: 1px solid #eee; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        .task-info-box h3 { border: none; margin-bottom: 5px; padding: 0; font-size: 18px; }
-
-        /* Chat Area */
-        .chat-section { display: flex; flex-direction: column; flex: 1; background: white; border: 1px solid #eee; border-radius: 8px; overflow: hidden; }
-        .chat-header { padding: 10px 15px; background: #f1f1f1; font-size: 12px; font-weight: bold; color: #666; border-bottom: 1px solid #ddd; }
+        /* Chat Section */
+        .chat-section { flex: 1; background: white; border-radius: 12px; border: 1px solid #eee; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+        .chat-title { padding: 15px; background: #fdfdfd; font-size: 13px; font-weight: 600; color: var(--primary-navy); border-bottom: 1px solid #f0f0f0; }
         
-        .chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #fff; }
+        .chat-list { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+        .msg-bubble { padding: 12px 16px; border-radius: 12px; max-width: 80%; font-size: 13px; line-height: 1.5; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .msg-mine { background: var(--primary-navy); color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
+        .msg-other { background: #f0f2f5; color: var(--text-dark); align-self: flex-start; border-bottom-left-radius: 2px; }
+        .msg-info { font-size: 10px; opacity: 0.7; margin-top: 4px; display: block; text-align: right; }
 
-        .msg-bubble { padding: 10px 14px; border-radius: 12px; max-width: 80%; font-size: 13px; line-height: 1.4; position: relative; }
-        .msg-mine { background: #e3f2fd; align-self: flex-end; border-bottom-right-radius: 2px; color: #333; }
-        .msg-other { background: #f1f1f1; align-self: flex-start; border-bottom-left-radius: 2px; color: #333; }
-        
-        .msg-meta { font-size: 10px; color: #888; margin-top: 4px; display: block; text-align: right; }
+        .chat-input-area { padding: 15px; background: white; border-top: 1px solid #f0f0f0; display: flex; gap: 10px; }
+        .chat-input { flex: 1; padding: 12px 20px; border: 1px solid #eee; border-radius: 30px; outline: none; background: #f9f9f9; }
+        .btn-send { background: var(--primary-green); color: white; border: none; padding: 0 25px; border-radius: 30px; cursor: pointer; font-weight: 700; font-size: 14px; transition: 0.2s; }
+        .btn-send:hover { background: #27ae60; transform: translateY(-1px); }
 
-        .chat-input-area { padding: 10px; border-top: 1px solid #eee; display: flex; gap: 10px; background: #fafafa; }
-        .chat-input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 20px; outline: none; font-size: 13px; }
-        .btn-send { background: var(--primary-navy); color: white; border: none; padding: 0 20px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 13px; }
-        .btn-send:hover { background: #132c52; }
+        /* Loader */
+        #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--primary-navy); font-weight: 600; }
 
-        #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; font-size: 24px; color: #333; flex-direction: column; gap: 10px; }
-
-        /* Responsive */
-        @media (max-width: 900px) {
-            .sidebar { position: absolute; left: -260px; height: 100%; z-index: 200; }
-            .sidebar.open { left: 0; }
-            .toggle-btn { display: block; margin-right: 15px; cursor: pointer; font-size: 24px; }
+        @media (max-width: 1024px) {
+            .sidebar { position: fixed; left: -280px; height: 100%; }
+            .sidebar.active { transform: translateX(280px); }
+            .toggle-btn { display: block; font-size: 24px; cursor: pointer; margin-right: 15px; }
+            .content { padding: 20px; }
         }
-        @media (min-width: 901px) { .toggle-btn { display: none; } }
+        @media (min-width: 1025px) { .toggle-btn { display: none; } }
     </style>
-
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
     <div id="loadingOverlay">
-        <div style="font-size: 40px; margin-bottom: 10px;">📝</div>
-        <div>Loading Task Data...</div>
+        <div style="font-size: 50px;">📝</div>
+        <div style="margin-top:15px;">Loading Tasks...</div>
     </div>
 
     <nav class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <img src="synod_logo.png" alt="Synod Logo" class="sidebar-logo">
+            <img src="synod_logo.png" alt="Logo" class="sidebar-logo">
             <div class="sidebar-brand">ADMIN PORTAL</div>
         </div>
-
         <ul class="nav-menu">
-            <li class="nav-item">
-                <a href="admin_homepage.html"><span class="nav-icon">🏠</span> Home</a>
-            </li>
-            <li class="nav-item">
-                <a href="admin_dashboard.jsp"><span class="nav-icon">📊</span> Live Dashboard</a>
-            </li>
-            <li class="nav-item">
-                <a href="manage_employees.jsp"><span class="nav-icon">👥</span> Employees</a>
-            </li>
-            <li class="nav-item">
-                <a href="admin_task_monitoring.jsp" class="active"><span class="nav-icon">📝</span> Tasks</a>
-            </li>
-            <li class="nav-item">
-                <a href="reports.jsp"><span class="nav-icon">📅</span> Attendance</a>
-            </li>
-            <li class="nav-item">
-                <a href="admin_expenses.jsp"><span class="nav-icon">💸</span> Expenses</a>
-            </li>
-             <li class="nav-item">
-                <a href="payroll.jsp"><span class="nav-icon">💰</span> Payroll</a>
-            </li>
-            <li class="nav-item">
-                <a href="admin_settings.jsp"><span class="nav-icon">⚙️</span> Settings</a>
-            </li>
+            <li class="nav-item"><a href="admin_homepage.html"><span class="nav-icon">🏠</span> Home</a></li>
+            <li class="nav-item"><a href="admin_dashboard.jsp"><span class="nav-icon">📊</span> Live Dashboard</a></li>
+            <li class="nav-item"><a href="manage_employees.jsp"><span class="nav-icon">👥</span> Employees</a></li>
+            <li class="nav-item"><a href="admin_task_monitoring.jsp" class="active"><span class="nav-icon">📝</span> Tasks</a></li>
+            <li class="nav-item"><a href="reports.jsp"><span class="nav-icon">📅</span> Attendance</a></li>
+            <li class="nav-item"><a href="admin_expenses.jsp"><span class="nav-icon">💸</span> Expenses</a></li>
+            <li class="nav-item"><a href="payroll.jsp"><span class="nav-icon">💰</span> Payroll</a></li>
+            <li class="nav-item"><a href="admin_settings.jsp"><span class="nav-icon">⚙️</span> Settings</a></li>
         </ul>
-
         <div class="sidebar-footer">
             <button onclick="logout()" class="btn-logout"><span>🚪</span> Sign Out</button>
         </div>
@@ -236,7 +160,7 @@
         <header class="topbar">
             <div style="display:flex; align-items:center;">
                 <div class="toggle-btn" onclick="toggleSidebar()">☰</div>
-                <div class="page-title">Task Management</div>
+                <div class="page-title">Task Monitoring</div>
             </div>
             <div class="user-profile">
                 <span id="adminEmail">Loading...</span>
@@ -246,25 +170,29 @@
 
         <div class="content">
             <div class="card">
-                <h3>All Assigned Tasks</h3>
-                <p style="color:#666; font-size:14px; margin-top:0;">
-                    Monitor employee progress and communicate updates directly via chat.
-                </p>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <h3>All Assigned Tasks</h3>
+                        <p style="color:#7f8c8d; font-size:14px; margin:0;">Track progress and communicate with assignees.</p>
+                    </div>
+                </div>
                 
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Assigned To</th>
-                            <th>Task Title</th>
-                            <th>Project</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="taskTableBody">
-                        <tr><td colspan="5" style="text-align:center;">Loading tasks...</td></tr>
-                    </tbody>
-                </table>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Assigned To</th>
+                                <th>Task Title</th>
+                                <th>Project</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="taskTableBody">
+                            <tr><td colspan="5" style="text-align:center; padding:30px; color:#999;">Loading tasks...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -277,20 +205,19 @@
             </div>
             <div class="modal-body">
                 
-                <div class="task-info-box">
-                    <h3 id="mTitle"></h3>
-                    <div style="font-size:13px; color:#555; margin-bottom:10px;">
-                        Assigned To: <b id="mAssignee"></b>
+                <div class="task-box">
+                    <h3 id="mTitle">Task Title</h3>
+                    <div class="task-meta">
+                        <span>👤 <b id="mAssignee">User</b></span>
+                        <span>📂 <b id="mProj">Project</b></span>
                     </div>
-                    <p id="mDesc" style="color:#444; font-size:14px; line-height:1.5;"></p>
-                    <div style="font-size:12px; color:#888; margin-top:10px; border-top:1px solid #eee; padding-top:10px;">
-                        Project: <span id="mProj"></span>
-                    </div>
+                    <div id="mDesc" class="task-desc">Task description goes here...</div>
                 </div>
 
                 <div class="chat-section">
-                    <div class="chat-header">Conversation History</div>
-                    <div id="chatMessages" class="chat-messages"></div>
+                    <div class="chat-title">💬 Discussion History</div>
+                    <div id="chatMessages" class="chat-list">
+                        </div>
                     <div class="chat-input-area">
                         <input type="text" id="chatInput" class="chat-input" placeholder="Type a reply...">
                         <button class="btn-send" onclick="sendReply()">Reply</button>
@@ -301,7 +228,7 @@
         </div>
     </div>
 
-    <script>
+<script>
         // --- 1. CONFIG ---
         const firebaseConfig = {
             apiKey: "AIzaSyBzdM77WwTSkxvF0lsxf2WLNLhjuGyNvQQ",

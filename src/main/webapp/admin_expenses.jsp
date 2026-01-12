@@ -11,219 +11,135 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Expense Approvals - Synod Bioscience</title>
     
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
     <style>
-        /* --- 1. RESET & VARS (Admin Theme) --- */
+        /* --- 1. RESET & CORE THEME --- */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        
         :root {
             --primary-navy: #1a3b6e;
+            --primary-dark: #122b52;
             --primary-green: #2ecc71;
-            --bg-light: #f4f6f9;
-            --text-dark: #333;
-            --text-grey: #666;
-            --sidebar-width: 260px;
+            --bg-light: #f0f2f5;
+            --text-dark: #2c3e50;
+            --text-grey: #7f8c8d;
+            --sidebar-width: 280px;
+            --card-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
 
         body { display: flex; height: 100vh; background-color: var(--bg-light); overflow: hidden; }
 
         /* --- 2. SIDEBAR --- */
-        .sidebar {
-            width: var(--sidebar-width);
-            background-color: var(--primary-navy);
-            color: white;
-            display: flex;
-            flex-direction: column;
-            transition: width 0.3s;
-            flex-shrink: 0;
+        .sidebar { 
+            width: var(--sidebar-width); 
+            background: linear-gradient(180deg, var(--primary-navy) 0%, var(--primary-dark) 100%);
+            color: white; 
+            display: flex; flex-direction: column; flex-shrink: 0; 
+            transition: all 0.3s ease; z-index: 1000;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.1);
         }
-
-        .sidebar-header {
-            padding: 20px;
-            background-color: rgba(0,0,0,0.1);
-            text-align: center;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .sidebar-logo {
-            max-width: 140px;
-            height: auto;
-            margin-bottom: 10px;
-            filter: brightness(0) invert(1);
-        }
+        .sidebar-header { padding: 30px 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.1); }
+        .sidebar-logo { max-width: 130px; margin-bottom: 15px; filter: brightness(0) invert(1) drop-shadow(0 4px 6px rgba(0,0,0,0.2)); }
+        .sidebar-brand { font-size: 13px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; opacity: 0.9; }
         
-        .sidebar-brand { font-size: 14px; opacity: 0.8; letter-spacing: 1px; text-transform: uppercase; }
-
-        .nav-menu {
-            list-style: none;
-            padding: 20px 0;
-            flex: 1;
-            overflow-y: auto;
-        }
-
-        .nav-item a {
-            display: flex;
-            align-items: center;
-            padding: 15px 25px;
-            color: #bdc3c7;
-            text-decoration: none;
-            font-size: 15px;
-            transition: all 0.3s;
-            border-left: 4px solid transparent;
-        }
-
-        .nav-item a:hover, .nav-item a.active {
-            background-color: rgba(255,255,255,0.05);
-            color: white;
-            border-left-color: var(--primary-green);
-        }
-
+        .nav-menu { list-style: none; padding: 20px 15px; flex: 1; overflow-y: auto; }
+        .nav-item { margin-bottom: 8px; }
+        .nav-item a { display: flex; align-items: center; padding: 14px 20px; color: #bdc3c7; text-decoration: none; font-size: 15px; font-weight: 500; border-radius: 10px; transition: all 0.2s; }
+        .nav-item a:hover { background: rgba(255,255,255,0.08); color: white; transform: translateX(5px); }
+        .nav-item a.active { background: var(--primary-green); color: white; box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4); }
         .nav-icon { margin-right: 15px; font-size: 18px; width: 25px; text-align: center; }
-
-        .sidebar-footer { padding: 20px; border-top: 1px solid rgba(255,255,255,0.1); }
-        .btn-logout {
-            width: 100%;
-            padding: 12px;
-            background-color: rgba(231, 76, 60, 0.8);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.3s;
-            display: flex; align-items: center; justify-content: center; gap: 10px;
-        }
-        .btn-logout:hover { background-color: #c0392b; }
+        
+        .sidebar-footer { padding: 25px; border-top: 1px solid rgba(255,255,255,0.05); }
+        .btn-logout { width: 100%; padding: 14px; background: rgba(231, 76, 60, 0.9); color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.2s; box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3); }
+        .btn-logout:hover { background: #c0392b; transform: translateY(-2px); }
 
         /* --- 3. MAIN CONTENT --- */
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-        }
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; position: relative; }
+        .topbar { background: white; height: 70px; display: flex; justify-content: space-between; align-items: center; padding: 0 40px; box-shadow: 0 2px 15px rgba(0,0,0,0.03); position: sticky; top: 0; z-index: 50; }
+        .page-title { font-size: 22px; font-weight: 700; color: var(--primary-navy); letter-spacing: -0.5px; }
+        .user-profile { display: flex; align-items: center; gap: 15px; background: #f8f9fa; padding: 8px 15px; border-radius: 30px; border: 1px solid #e9ecef; }
+        .user-avatar { width: 36px; height: 36px; background: var(--primary-navy); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; }
 
-        /* Top Bar */
-        .topbar {
-            background: white;
-            height: 60px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            position: sticky; top: 0; z-index: 100;
-        }
+        .content { padding: 30px 40px; max-width: 1600px; margin: 0 auto; width: 100%; }
 
-        .page-title { font-size: 20px; font-weight: bold; color: var(--primary-navy); }
-        .user-profile { font-size: 14px; color: var(--text-grey); display: flex; align-items: center; gap: 10px; }
-        .user-avatar { width: 35px; height: 35px; background: #e0e0e0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: var(--primary-navy); }
-
-        /* --- 4. PAGE SPECIFIC STYLES --- */
-        .content { padding: 30px; max-width: 1400px; margin: 0 auto; width: 100%; }
-
-        /* Card & Table */
-        .card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 4px solid var(--primary-navy); }
-        
-        .card-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #f4f6f9; padding-bottom: 15px; }
-        .card-title { margin: 0; color: var(--primary-navy); font-size: 18px; font-weight: bold; }
+        /* --- 4. EXPENSE CARD --- */
+        .card { background: white; padding: 30px; border-radius: 16px; box-shadow: var(--card-shadow); border: 1px solid white; display: flex; flex-direction: column; }
+        .card-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid #f0f0f0; padding-bottom: 15px; }
+        .card-title { margin: 0; font-size: 18px; font-weight: 700; color: var(--primary-navy); }
 
         /* Refresh Button */
         .btn-refresh { 
-            padding: 10px 20px; 
-            background: var(--primary-navy); 
-            color: white; 
-            border: none; 
-            border-radius: 6px; 
-            cursor: pointer; 
-            font-size: 14px; 
-            font-weight: bold; 
-            display: flex; align-items: center; gap: 8px;
-            transition: 0.2s;
+            padding: 10px 20px; border: none; border-radius: 8px; 
+            background: white; border: 1px solid #e0e0e0; 
+            color: var(--text-dark); font-weight: 600; cursor: pointer; 
+            transition: 0.2s; display: flex; align-items: center; gap: 8px; font-size: 13px;
         }
-        .btn-refresh:hover { background: #132c52; transform: translateY(-1px); }
+        .btn-refresh:hover { background: #f9f9f9; border-color: var(--primary-navy); color: var(--primary-navy); }
 
         /* Table Styles */
-        table { width: 100%; border-collapse: collapse; }
-        th { background: #f8f9fa; color: #666; padding: 15px 12px; text-align: left; font-size: 13px; text-transform: uppercase; border-bottom: 2px solid #eee; font-weight: 700; }
-        td { padding: 15px 12px; border-bottom: 1px solid #f1f1f1; color: #444; font-size: 14px; vertical-align: middle; }
-        tr:hover { background: #fafafa; }
+        .table-wrap { overflow-x: auto; border-radius: 8px; border: 1px solid #f0f0f0; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        th { background: #f8f9fa; padding: 15px; text-align: left; font-size: 12px; color: var(--text-grey); font-weight: 700; text-transform: uppercase; border-bottom: 2px solid #eee; }
+        td { padding: 15px; border-bottom: 1px solid #f9f9f9; font-size: 14px; color: var(--text-dark); vertical-align: middle; }
+        tr:hover td { background: #fcfcfc; }
 
-        /* Status Badges */
-        .badge { padding: 6px 12px; border-radius: 20px; color: white; font-size: 11px; font-weight: bold; display: inline-block; letter-spacing: 0.5px; }
-        .bg-Pending { background: #f39c12; color: white; }
-        .bg-Approved { background: #3498db; }
-        .bg-Paid { background: var(--primary-green); }
-        .bg-Rejected { background: #e74c3c; }
+        /* Badges */
+        .badge { padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-block; text-transform: uppercase; letter-spacing: 0.5px; }
+        .bg-Pending { background: #fff3cd; color: #f39c12; }
+        .bg-Approved { background: #e3f2fd; color: #3498db; }
+        .bg-Paid { background: #e8f5e9; color: #27ae60; }
+        .bg-Rejected { background: #ffebee; color: #c0392b; }
 
-        /* Action Buttons */
-        .btn-action { border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 12px; color: white; margin-right: 5px; font-weight: 600; transition: opacity 0.2s; }
-        .btn-action:hover { opacity: 0.8; }
+        /* Actions */
+        .btn-action { border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; color: white; margin-right: 5px; font-weight: 700; transition: 0.2s; display: inline-flex; align-items: center; gap: 5px; }
+        .btn-action:hover { transform: translateY(-1px); opacity: 0.9; }
         
-        .btn-approve { background: #3498db; }
-        .btn-pay { background: var(--primary-green); }
-        .btn-reject { background: #e74c3c; }
+        .btn-approve { background: #3498db; box-shadow: 0 2px 5px rgba(52, 152, 219, 0.3); }
+        .btn-pay { background: #27ae60; box-shadow: 0 2px 5px rgba(39, 174, 96, 0.3); }
+        .btn-reject { background: #e74c3c; box-shadow: 0 2px 5px rgba(231, 76, 60, 0.3); }
         
         .btn-view { 
-            background: #ecf0f1; text-decoration: none; padding: 6px 12px; border-radius: 4px; 
-            color: #555; font-size: 12px; display: inline-block; border: 1px solid #ddd; font-weight: 600;
+            background: white; border: 1px solid #e0e0e0; padding: 6px 12px; border-radius: 6px; 
+            color: var(--text-dark); font-size: 12px; font-weight: 600; text-decoration: none; 
+            display: inline-flex; align-items: center; gap: 5px; transition: 0.2s;
         }
-        .btn-view:hover { background: #e0e0e0; color: #333; }
+        .btn-view:hover { background: #f9f9f9; border-color: var(--primary-navy); color: var(--primary-navy); }
 
-        #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; font-size: 24px; color: #333; flex-direction: column; gap: 10px; }
+        #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; font-size: 24px; color: var(--primary-navy); flex-direction: column; font-weight: 600; }
 
-        /* Responsive */
-        @media (max-width: 900px) {
-            .sidebar { position: absolute; left: -260px; height: 100%; z-index: 200; }
-            .sidebar.open { left: 0; }
-            .toggle-btn { display: block; margin-right: 15px; cursor: pointer; font-size: 24px; }
+        @media (max-width: 1024px) {
+            .sidebar { position: fixed; left: -280px; height: 100%; }
+            .sidebar.active { transform: translateX(280px); }
+            .toggle-btn { display: block; font-size: 24px; cursor: pointer; margin-right: 15px; }
+            .content { padding: 20px; }
         }
-        @media (min-width: 901px) { .toggle-btn { display: none; } }
+        @media (min-width: 1025px) { .toggle-btn { display: none; } }
     </style>
-
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
     <div id="loadingOverlay">
-        <div style="font-size: 40px; margin-bottom: 10px;">💸</div>
-        <div>Loading Claims...</div>
+        <div style="font-size: 50px;">💸</div>
+        <div style="margin-top:15px;">Loading Expenses...</div>
     </div>
 
     <nav class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <img src="synod_logo.png" alt="Synod Logo" class="sidebar-logo">
+            <img src="synod_logo.png" alt="Logo" class="sidebar-logo">
             <div class="sidebar-brand">ADMIN PORTAL</div>
         </div>
-
         <ul class="nav-menu">
-            <li class="nav-item">
-                <a href="admin_homepage.html"><span class="nav-icon">🏠</span> Home</a>
-            </li>
-            <li class="nav-item">
-                <a href="admin_dashboard.jsp"><span class="nav-icon">📊</span> Live Dashboard</a>
-            </li>
-            <li class="nav-item">
-                <a href="manage_employees.jsp"><span class="nav-icon">👥</span> Employees</a>
-            </li>
-            <li class="nav-item">
-                <a href="admin_task_monitoring.jsp"><span class="nav-icon">📝</span> Tasks</a>
-            </li>
-            <li class="nav-item">
-                <a href="admin_attendance.jsp"><span class="nav-icon">📅</span> Attendance</a>
-            </li>
-            <li class="nav-item">
-                <a href="admin_expenses.jsp" class="active"><span class="nav-icon">💸</span> Expenses</a>
-            </li>
-             <li class="nav-item">
-                <a href="payroll.jsp" class="active"><span class="nav-icon">💰</span> Payroll</a>
-                </li>
-            <li class="nav-item">
-                <a href="admin_settings.jsp"><span class="nav-icon">⚙️</span> Settings</a>
-            </li>
+            <li class="nav-item"><a href="admin_homepage.html"><span class="nav-icon">🏠</span> Home</a></li>
+            <li class="nav-item"><a href="admin_dashboard.jsp"><span class="nav-icon">📊</span> Live Dashboard</a></li>
+            <li class="nav-item"><a href="manage_employees.jsp"><span class="nav-icon">👥</span> Employees</a></li>
+            <li class="nav-item"><a href="admin_task_monitoring.jsp"><span class="nav-icon">📝</span> Tasks</a></li>
+            <li class="nav-item"><a href="reports.jsp"><span class="nav-icon">📅</span> Attendance</a></li>
+            <li class="nav-item"><a href="admin_expenses.jsp" class="active"><span class="nav-icon">💸</span> Expenses</a></li>
+            <li class="nav-item"><a href="payroll.jsp"><span class="nav-icon">💰</span> Payroll</a></li>
+            <li class="nav-item"><a href="admin_settings.jsp"><span class="nav-icon">⚙️</span> Settings</a></li>
         </ul>
-
         <div class="sidebar-footer">
             <button onclick="logout()" class="btn-logout"><span>🚪</span> Sign Out</button>
         </div>
@@ -244,32 +160,37 @@
         <div class="content">
             <div class="card">
                 <div class="card-header-row">
-                    <h3 class="card-title">Pending & Recent Claims</h3>
-                    <button onclick="loadExpenses()" class="btn-refresh">🔄 Refresh Data</button>
+                    <div>
+                        <h3 class="card-title">Pending & Recent Claims</h3>
+                        <p style="font-size:13px; color:#7f8c8d; margin:5px 0 0 0;">Review, approve, and reimburse employee expenses.</p>
+                    </div>
+                    <button onclick="loadExpenses()" class="btn-refresh">🔄 Refresh List</button>
                 </div>
 
-                <table id="claimsTable">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Employee</th>
-                            <th>Type</th>
-                            <th>Details</th>
-                            <th>Amount</th>
-                            <th>Receipt</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody">
-                        <tr><td colspan="8" style="text-align:center; padding:20px;">Loading records...</td></tr>
-                    </tbody>
-                </table>
+                <div class="table-wrap">
+                    <table id="claimsTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Employee</th>
+                                <th>Type</th>
+                                <th>Details</th>
+                                <th>Amount</th>
+                                <th>Receipt</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <tr><td colspan="8" style="text-align:center; padding:30px; color:#999;">Loading records...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 
-    <script>
+   <script>
         // --- 1. CONFIG ---
         const firebaseConfig = {
             apiKey: "AIzaSyBzdM77WwTSkxvF0lsxf2WLNLhjuGyNvQQ",
