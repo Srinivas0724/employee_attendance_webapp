@@ -294,7 +294,10 @@
             <div class="sidebar-brand">EMPLOYEE PORTAL</div>
         </div>
 
-        <ul class="nav-menu">
+                <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="employee_dashboard.jsp"><span class="nav-icon">📊</span> Dashboard</a>
+            </li>
             <li class="nav-item">
                 <a href="mark_attendance.jsp"><span class="nav-icon">📍</span> Mark Attendance</a>
             </li>
