@@ -100,12 +100,20 @@
         .user-info b { font-size: 14px; color: var(--text-dark); display: block; }
         .user-info span { font-size: 12px; color: var(--text-grey); }
         
+        /* Status Pill */
+        .status-pill { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: bold; margin-left: 5px; }
+        .status-pending { background: #ffeeba; color: #856404; }
+        .status-active { background: #d4edda; color: #155724; }
+        .status-disabled { background: #f8d7da; color: #721c24; }
+        
         .user-actions { display: flex; gap: 10px; align-items: center; }
         .role-select { padding: 6px 12px; margin: 0; font-size: 12px; width: auto; font-weight: 600; }
         
         .btn-toggle { padding: 6px 12px; border-radius: 6px; border: none; font-size: 11px; font-weight: 700; text-transform: uppercase; cursor: pointer; color: white; }
         .btn-enable { background: var(--primary-green); }
         .btn-disable { background: #e74c3c; }
+        .btn-approve { background: #f39c12; color: white; box-shadow: 0 2px 5px rgba(243, 156, 18, 0.3); }
+        .btn-approve:hover { background: #d35400; transform: translateY(-1px); }
 
         #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--primary-navy); font-weight: 600; }
 
@@ -141,7 +149,6 @@
             <li class="nav-item"><a href="payroll.jsp"><span class="nav-icon">💰</span> Payroll</a></li>
             <li class="nav-item"><a href="admin_settings.jsp" class="active"><span class="nav-icon">⚙️</span> Settings</a></li>
         </ul>
-
         <div class="sidebar-footer">
             <button onclick="logout()" class="btn-logout"><span>🚪</span> Sign Out</button>
         </div>
@@ -208,7 +215,7 @@
 
             <div class="card">
                 <h3>👥 Active Users & Roles</h3>
-                <p class="card-desc">Manage system access, update roles, or disable employee accounts.</p>
+                <p class="card-desc">Manage access, approve new registrations, or disable accounts.</p>
                 <div id="usersList" class="user-list-container">
                     <div style="text-align:center; padding:30px; color:#999;">Loading users...</div>
                 </div>
@@ -217,8 +224,8 @@
         </div>
     </div>
 
-  <script>
-        // --- 1. CONFIG ---
+    <script>
+        // CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyBzdM77WwTSkxvF0lsxf2WLNLhjuGyNvQQ",
             authDomain: "attendancewebapp-ef02a.firebaseapp.com",
@@ -227,62 +234,35 @@
             messagingSenderId: "734213881030",
             appId: "1:734213881030:web:bfdcee5a2ff293f87e6bc7"
         };
-
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // --- 2. AUTH CHECK ---
+        // AUTH
         auth.onAuthStateChanged(user => {
-    if (user) {
-        db.collection("users").doc(user.email).get().then(doc => {
-            if (doc.exists) {
-                const role = doc.data().role;
-                
-                // 1. CHECK ACCESS: Allow Admin OR Manager
-                if (role !== 'admin' && role !== 'manager') {
-                    window.location.href = "index.html"; // Kick out employees
-                    return;
-                }
+            if (user) {
+                db.collection("users").doc(user.email).get().then(doc => {
+                    if (doc.exists) {
+                        const d = doc.data();
+                        const role = d.role;
+                        
+                        if (role !== 'admin' && role !== 'manager') {
+                            window.location.href = "index.html"; return;
+                        }
 
-                // 2. LOAD USER INFO
-                if(document.getElementById("adminEmail")) {
-                     document.getElementById("adminEmail").innerText = user.email;
-                }
-                
-                // 3. IF MANAGER -> HIDE RESTRICTED SIDEBAR LINKS
-                if (role === 'manager') {
-                    // Change Brand Name
-                    const brand = document.querySelector('.sidebar-brand');
-                    if(brand) brand.innerText = "MANAGER PORTAL";
+                        document.getElementById("adminEmail").innerText = user.email;
+                        if (role === 'manager') document.querySelector('.sidebar-brand').innerText = "MANAGER PORTAL";
 
-                    // Hide Expenses Link (Find by href)
-                    const expLink = document.querySelector('a[href="admin_expenses.jsp"]');
-                    if(expLink && expLink.parentElement) expLink.parentElement.style.display = 'none';
-
-                    // Hide Payroll Link
-                    const payLink = document.querySelector('a[href="payroll.jsp"]');
-                    if(payLink && payLink.parentElement) payLink.parentElement.style.display = 'none';
-                }
-
-                // 4. LOAD PAGE DATA (Call your page's load function)
-                // Note: Ensure the specific page's load function exists (e.g., loadEmployees(), loadTasks())
-                // You might need to check which page you are on, or just let the existing code run below this block.
-                if(typeof loadEmployeeList === "function") loadEmployeeList();
-                if(typeof loadTasks === "function") loadTasks();
-                if(typeof loadAttendance === "function") loadAttendance();
-                
-                // Hide Loader
-                const loader = document.getElementById("loadingOverlay");
-                if(loader) loader.style.display = "none";
+                        loadEmployeeList();
+                        document.getElementById("loadingOverlay").style.display = "none";
+                    }
+                });
+            } else {
+                window.location.href = "index.html";
             }
         });
-    } else {
-        window.location.replace("index.html");
-    }
-});
 
-        // --- 3. LOAD USERS ---
+        // LOAD USERS - FIXED FOR CASE SENSITIVITY
         function loadEmployeeList() {
             const select = document.getElementById("shiftEmpSelect");
             const listDiv = document.getElementById("usersList");
@@ -294,107 +274,108 @@
                 snap.forEach(doc => {
                     const data = doc.data();
                     const email = doc.id;
-                    const role = data.role || "employee";
-                    const status = data.status || "Active"; // Default to Active
+                    const role = data.role || "pending";
+                    // IMPORTANT: Convert status to lowercase for robust checking
+                    const status = (data.status || "pending").toLowerCase();
+                    const fullName = data.fullName || "Unknown";
                     
-                    // 1. Shift Dropdown (Skip admins if desired)
+                    // 1. Shift Dropdown
                     if(role !== 'admin') {
-                        const opt = document.createElement("option");
+                        let opt = document.createElement("option");
                         opt.value = email;
-                        opt.innerText = data.fullName + " (" + email + ")";
+                        opt.text = fullName + " (" + email + ")";
                         select.appendChild(opt);
                     }
 
-                    // 2. User List Item
-                    let isEmp = (role === 'employee') ? 'selected' : '';
-                    let isAdmin = (role === 'admin') ? 'selected' : '';
-
-                    // Role Select
-                    let roleSelect = "<select onchange=\"updateRole('" + email + "', this.value)\" class='role-select'>";
-                    roleSelect += "<option value='employee' " + isEmp + ">Employee</option>";
-                    roleSelect += "<option value='admin' " + isAdmin + ">Admin</option>";
-                    roleSelect += "<option value='manager' " + (role === 'manager' ? 'selected' : '') + ">Manager</option>"; 
-                    roleSelect += "</select>";
-
-                    // Disable Button Logic
+                    // 2. Decide Button (Approve vs Disable/Enable)
                     let btnHtml = "";
-                    if(status === 'Disabled') {
-                        btnHtml = "<button class='btn-toggle btn-enable' onclick=\"toggleUserStatus('" + email + "', 'Active')\">Enable</button>";
+                    let statusLabel = "";
+
+                    if (status === 'pending') {
+                        statusLabel = "<span class='status-pill status-pending'>Pending</span>";
+                        btnHtml = "<button class='btn-toggle btn-approve' onclick='approveUser(\"" + email + "\")'>✅ Approve</button>";
+                    } else if (status === 'disabled') {
+                        statusLabel = "<span class='status-pill status-disabled'>Disabled</span>";
+                        btnHtml = "<button class='btn-toggle btn-enable' onclick='toggleUserStatus(\"" + email + "\", \"Active\")'>Enable</button>";
                     } else {
-                        btnHtml = "<button class='btn-toggle btn-disable' onclick=\"toggleUserStatus('" + email + "', 'Disabled')\">Disable</button>";
+                        // Default to active for any other status (e.g. "Active", "active")
+                        statusLabel = "<span class='status-pill status-active'>Active</span>";
+                        btnHtml = "<button class='btn-toggle btn-disable' onclick='toggleUserStatus(\"" + email + "\", \"Disabled\")'>Disable</button>";
                     }
 
-                    const row = document.createElement("div");
-                    row.className = "user-list-item";
-                    row.innerHTML = 
-                        "<div class='user-info'><b>" + (data.fullName || "Unknown") + "</b><span>" + email + "</span></div>" +
-                        "<div class='user-actions'>" + roleSelect + btnHtml + "</div>";
+                    // 3. Role Select
+                    let roleOptions = "<select onchange='updateRole(\"" + email + "\", this.value)' class='role-select'>";
+                    roleOptions += "<option value='employee' " + (role === 'employee' ? 'selected' : '') + ">Employee</option>";
+                    roleOptions += "<option value='admin' " + (role === 'admin' ? 'selected' : '') + ">Admin</option>";
+                    roleOptions += "<option value='manager' " + (role === 'manager' ? 'selected' : '') + ">Manager</option>";
+                    roleOptions += "</select>";
+
+                    // 4. Build User Row
+                    const item = document.createElement("div");
+                    item.className = "user-list-item";
+                    item.innerHTML = 
+                        "<div class='user-info'>" +
+                            "<b>" + fullName + " " + statusLabel + "</b>" +
+                            "<span>" + email + "</span>" +
+                        "</div>" +
+                        "<div class='user-actions'>" +
+                            roleOptions +
+                            btnHtml +
+                        "</div>";
                     
-                    listDiv.appendChild(row);
+                    listDiv.appendChild(item);
                 });
             });
         }
 
-        // --- 4. UPDATE ROLE ---
-        function updateRole(email, newRole) {
-            if(!confirm("Change " + email + " to " + newRole.toUpperCase() + "?")) {
-                loadEmployeeList(); 
-                return;
-            }
-
-            db.collection("users").doc(email).update({
-                role: newRole
+        // ACTIONS
+        function approveUser(email) {
+            if(!confirm("Approve registration for " + email + "?")) return;
+            
+            db.collection("users").doc(email).update({ 
+                status: 'Active',
+                role: 'employee' 
             }).then(() => {
-                alert("✅ Role Updated!");
-            }).catch(e => {
-                alert("Error: " + e.message);
+                alert("✅ User Approved!");
                 loadEmployeeList();
             });
         }
 
-        // --- 5. TOGGLE STATUS (DISABLE/ENABLE) ---
-        function toggleUserStatus(email, newStatus) {
-            let action = (newStatus === 'Active') ? "ENABLE" : "DISABLE";
-            if(!confirm("Are you sure you want to " + action + " this user account?")) return;
-
-            db.collection("users").doc(email).update({
-                status: newStatus
-            }).then(() => {
-                alert("✅ Account " + (newStatus === 'Active' ? "Enabled" : "Disabled"));
-                loadEmployeeList(); // Refresh list to update button color
-            }).catch(e => alert("Error: " + e.message));
+        function updateRole(email, newRole) {
+            if(!confirm("Change " + email + " role to " + newRole.toUpperCase() + "?")) { loadEmployeeList(); return; }
+            db.collection("users").doc(email).update({ role: newRole })
+              .then(() => alert("✅ Role Updated!"));
         }
 
-        // --- 6. SHIFT MGMT ---
+        function toggleUserStatus(email, newStatus) {
+            if(!confirm(newStatus + " this user?")) return;
+            db.collection("users").doc(email).update({ status: newStatus })
+              .then(() => { alert("✅ Updated"); loadEmployeeList(); });
+        }
+
+        // SHIFTS
         function loadShifts() {
             const email = document.getElementById("shiftEmpSelect").value;
-            const container = document.getElementById("shiftInputs");
+            const div = document.getElementById("shiftInputs");
+            if(!email) { div.style.display = "none"; return; }
             
-            if(!email) {
-                container.style.display = "none";
-                return;
-            }
-
-            container.style.display = "block";
-            
+            div.style.display = "block";
             db.collection("users").doc(email).get().then(doc => {
-                if(doc.exists) {
-                    const s = doc.data().shiftTimings || {};
-                    document.getElementById("shift_Mon").value = s.Mon || "09:30";
-                    document.getElementById("shift_Tue").value = s.Tue || "09:30";
-                    document.getElementById("shift_Wed").value = s.Wed || "09:30";
-                    document.getElementById("shift_Thu").value = s.Thu || "09:30";
-                    document.getElementById("shift_Fri").value = s.Fri || "09:30";
-                    document.getElementById("shift_Sat").value = s.Sat || "09:30";
-                    document.getElementById("shift_Sun").value = s.Sun || "OFF";
-                }
+                const s = doc.data().shiftTimings || {};
+                document.getElementById("shift_Mon").value = s.Mon || "09:30";
+                document.getElementById("shift_Tue").value = s.Tue || "09:30";
+                document.getElementById("shift_Wed").value = s.Wed || "09:30";
+                document.getElementById("shift_Thu").value = s.Thu || "09:30";
+                document.getElementById("shift_Fri").value = s.Fri || "09:30";
+                document.getElementById("shift_Sat").value = s.Sat || "09:30";
+                document.getElementById("shift_Sun").value = s.Sun || "OFF";
             });
         }
 
         function saveShifts() {
             const email = document.getElementById("shiftEmpSelect").value;
             if(!email) return;
-
+            
             const shifts = {
                 Mon: document.getElementById("shift_Mon").value,
                 Tue: document.getElementById("shift_Tue").value,
@@ -405,38 +386,24 @@
                 Sun: document.getElementById("shift_Sun").value
             };
 
-            db.collection("users").doc(email).update({
-                shiftTimings: shifts
-            }).then(() => {
-                alert("✅ Shift Timings Updated for " + email);
-            });
+            db.collection("users").doc(email).update({ shiftTimings: shifts })
+              .then(() => alert("✅ Shift Timings Saved!"));
         }
 
-        // --- 7. ADMIN SECURITY ---
         function changeAdminPass() {
             const p1 = document.getElementById("newPass").value;
             const p2 = document.getElementById("confirmPass").value;
-            
             if(p1.length < 6) { alert("Password too short."); return; }
             if(p1 !== p2) { alert("Passwords do not match."); return; }
-
+            
             auth.currentUser.updatePassword(p1).then(() => {
-                alert("Password Updated! Please login again.");
+                alert("Password Updated. Please login again.");
                 logout();
-            }).catch(e => alert("Error: " + e.message));
+            }).catch(e => alert(e.message));
         }
 
-        function toggleReg() {
-            alert("This feature requires backend configuration.");
-        }
-
-        function logout(){
-            auth.signOut().then(() => window.location.href = "index.html");
-        }
-        
-        function toggleSidebar() {
-            document.getElementById("sidebar").classList.toggle("open");
-        }
+        function logout(){ auth.signOut().then(() => window.location.href = "index.html"); }
+        function toggleSidebar() { document.getElementById("sidebar").classList.toggle("open"); }
     </script>
 </body>
 </html>
