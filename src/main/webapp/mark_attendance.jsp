@@ -236,6 +236,7 @@
         video { 
             width: 100%; height: 100%; 
             object-fit: cover; 
+            /* Flip horizontally ONLY for front camera (handled by JS later ideally, but default flip is okay for selfies) */
             transform: scaleX(-1); 
         }
         
@@ -276,6 +277,18 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.3); 
             z-index: 30; 
         }
+
+        /* NEW FLIP BUTTON */
+        .btn-flip {
+            position: absolute; top: 15px; left: 15px;
+            background: rgba(0,0,0,0.6); color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 8px 12px; border-radius: 30px;
+            font-size: 12px; cursor: pointer; z-index: 40;
+            display: none; /* Hidden until camera starts */
+            backdrop-filter: blur(4px);
+        }
+        .btn-flip:hover { background: rgba(0,0,0,0.8); }
 
         /* Controls Section */
         .controls-section { padding: 30px; }
@@ -414,8 +427,11 @@
 
                 <div class="camera-container">
                     <video id="video" autoplay playsinline muted></video>
+                    
                     <div class="overlay-instruction">Position your face within the frame</div>
                     
+                    <button id="flipBtn" class="btn-flip" onclick="flipCamera()">🔄 Flip Camera</button>
+
                     <button id="startBtn" class="btn-start-camera" onclick="startCamera()">
                         <span>📸 Tap to Start Camera</span>
                     </button>
@@ -459,15 +475,16 @@
         const db = firebase.firestore();
 
         let currentUser = null;
+        let currentFacingMode = 'user'; // Default front camera
+        let streamRef = null; // Store stream to stop it later
 
         // --- 2. AUTH CHECK ---
         auth.onAuthStateChanged(user => {
             if (user) {
                 db.collection("users").doc(user.email).get().then(doc => {
                     const role = doc.data().role;
-                    // If not employee or manager, redirect
                     if(role !== 'employee' && role !== 'manager') {
-                         // Optional: Redirect Admins away from here if needed
+                         // Optional: Handle if someone else logs in
                     }
 
                     if (doc.data().status === "Disabled") {
@@ -519,15 +536,40 @@
               });
         }
 
-        // --- 4. CAMERA LOGIC ---
+        // --- 4. CAMERA LOGIC (WITH FLIP) ---
         function startCamera() {
             const vid = document.getElementById("video");
             const btn = document.getElementById("startBtn");
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } }).then(stream => {
+            const flipBtn = document.getElementById("flipBtn");
+
+            // Stop existing stream if any
+            if(streamRef) {
+                streamRef.getTracks().forEach(track => track.stop());
+            }
+
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacingMode } }).then(stream => {
+                streamRef = stream;
                 vid.srcObject = stream;
                 vid.play();
-                btn.style.display = "none"; 
-            }).catch(err => alert("Camera Access Denied. Check permissions."));
+                btn.style.display = "none";
+                flipBtn.style.display = "block"; // Show flip button once camera is on
+
+                // Mirror effect ONLY for front camera
+                if(currentFacingMode === 'user') {
+                    vid.style.transform = "scaleX(-1)";
+                } else {
+                    vid.style.transform = "scaleX(1)";
+                }
+
+            }).catch(err => {
+                console.error(err);
+                alert("Camera Access Denied. Please allow permission.");
+            });
+        }
+
+        function flipCamera() {
+            currentFacingMode = (currentFacingMode === 'user') ? 'environment' : 'user';
+            startCamera();
         }
 
         // --- 5. ATTENDANCE LOGIC ---
@@ -536,7 +578,6 @@
             if (!vid.srcObject) { alert("⚠️ Please start the camera first."); return; }
 
             const btn = type === 'IN' ? document.getElementById("btnIn") : document.getElementById("btnOut");
-            const originalText = btn.innerHTML;
             btn.innerHTML = "<span>📍 Locating...</span>";
             btn.disabled = true;
 
@@ -559,13 +600,25 @@
             try {
                 canvas.width = 480; canvas.height = 360;
                 const ctx = canvas.getContext("2d");
+                
+                // Handle mirroring for canvas drawing too
+                if (currentFacingMode === 'user') {
+                    ctx.translate(canvas.width, 0);
+                    ctx.scale(-1, 1);
+                }
+
                 ctx.drawImage(vid, 0, 0, canvas.width, canvas.height);
+                
+                // Reset transform for text overlay
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+
                 ctx.fillStyle = "rgba(0,0,0,0.5)";
                 ctx.fillRect(0, 310, 480, 50);
                 ctx.fillStyle = "white";
                 ctx.font = "bold 14px Arial";
                 ctx.fillText(new Date().toLocaleString(), 15, 330);
                 ctx.fillText("Lat: " + lat.toFixed(4) + ", Lng: " + lng.toFixed(4), 15, 350);
+                
                 photoData = canvas.toDataURL("image/jpeg", 0.7);
                 document.getElementById("snapshotPreview").src = photoData;
                 document.getElementById("snapshotPreview").style.display = "block";
@@ -591,7 +644,6 @@
         }
 
         function logout(){ auth.signOut().then(() => window.location.href = "index.html"); }
-        function toggleSidebar() { document.getElementById("sidebar").classList.toggle("open"); }
     </script>
 </body>
 </html>
