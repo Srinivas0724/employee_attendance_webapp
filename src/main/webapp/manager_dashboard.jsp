@@ -139,15 +139,17 @@
             <img src="synod_logo.png" alt="Logo" class="sidebar-logo">
             <div class="sidebar-brand">MANAGER PORTAL</div>
         </div>
+
         <ul class="nav-menu">
             <li class="nav-item"><a href="manager_dashboard.jsp" class="active"><span class="nav-icon">📊</span> Overview</a></li>
-            <li class="nav-item"><a href="mark_attendance.jsp"><span class="nav-icon">📍</span> My Attendance</a></li>
-            <li class="nav-item"><a href="manage_employees.jsp"><span class="nav-icon">👥</span> Assign Tasks</a></li>
-            <li class="nav-item"><a href="admin_task_monitoring.jsp"><span class="nav-icon">📝</span> Task Monitoring</a></li>
-            <li class="nav-item"><a href="reports.jsp"><span class="nav-icon">📅</span> View Attendance</a></li>
-            <li class="nav-item"><a href="list_of_employees.jsp"><span class="nav-icon">📋</span> Directory</a></li>
-            <li class="nav-item"><a href="settings.jsp"><span class="nav-icon">⚙️</span> My Settings</a></li>
+            <li class="nav-item"><a href="manager_mark_attendance.jsp"><span class="nav-icon">📍</span> My Attendance</a></li>
+            <li class="nav-item"><a href="manager_manage_employees.jsp"><span class="nav-icon">👥</span> Assign Tasks</a></li>
+            <li class="nav-item"><a href="manager_task_monitoring.jsp"><span class="nav-icon">📝</span> Task Monitoring</a></li>
+            <li class="nav-item"><a href="manager_report.jsp"><span class="nav-icon">📅</span> View Attendance</a></li>
+            <li class="nav-item"><a href="manager_list_of_employees.jsp"><span class="nav-icon">📋</span> Directory</a></li>
+            <li class="nav-item"><a href="manager_settings.jsp"><span class="nav-icon">⚙️</span> My Settings</a></li>
         </ul>
+
         <div class="sidebar-footer">
             <button onclick="logout()" class="btn-logout"><span>🚪</span> Sign Out</button>
         </div>

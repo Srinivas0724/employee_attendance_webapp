@@ -308,24 +308,13 @@
         </div>
 
         <ul class="nav-menu">
-            <li class="nav-item">
-                <a href="manager_dashboard.jsp"><span class="nav-icon">📊</span> Overview</a>
-            </li>
-            <li class="nav-item">
-                <a href="manager_mark_attendance.jsp"><span class="nav-icon">📍</span> My Attendance</a>
-            </li>
-            <li class="nav-item">
-                <a href="manager_manage_employees.jsp"><span class="nav-icon">👥</span> Assign Tasks</a>
-            </li>
-            <li class="nav-item">
-                <a href="manager_task_monitoring.jsp" class="active"><span class="nav-icon">📝</span> Task Monitoring</a>
-            </li>
-            <li class="nav-item">
-                <a href="manager_report.jsp"><span class="nav-icon">📅</span> View Attendance</a>
-            </li>
-            <li class="nav-item">
-                <a href="manager_settings.jsp"><span class="nav-icon">⚙️</span> My Settings</a>
-            </li>
+            <li class="nav-item"><a href="manager_dashboard.jsp"><span class="nav-icon">📊</span> Overview</a></li>
+            <li class="nav-item"><a href="manager_mark_attendance.jsp"><span class="nav-icon">📍</span> My Attendance</a></li>
+            <li class="nav-item"><a href="manager_manage_employees.jsp"><span class="nav-icon">👥</span> Assign Tasks</a></li>
+            <li class="nav-item"><a href="manager_task_monitoring.jsp" class="active"><span class="nav-icon">📝</span> Task Monitoring</a></li>
+            <li class="nav-item"><a href="manager_report.jsp"><span class="nav-icon">📅</span> View Attendance</a></li>
+            <li class="nav-item"><a href="manager_list_of_employees.jsp"><span class="nav-icon">📋</span> Directory</a></li>
+            <li class="nav-item"><a href="manager_settings.jsp"><span class="nav-icon">⚙️</span> My Settings</a></li>
         </ul>
 
         <div class="sidebar-footer">

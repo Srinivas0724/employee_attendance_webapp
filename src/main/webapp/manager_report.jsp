@@ -9,12 +9,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Attendance Report - Manager Portal</title>
+    <title>Attendance Reports - Synod Bioscience</title>
     
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
     <style>
-        /* --- 1. RESET & VARS --- */
+        /* --- 1. RESET & CORE THEME (Matches Admin) --- */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        
         :root {
             --primary-navy: #1a3b6e;
             --primary-dark: #122b52;
@@ -22,296 +26,135 @@
             --bg-light: #f0f2f5;
             --text-dark: #2c3e50;
             --text-grey: #7f8c8d;
-            --card-shadow: 0 10px 30px rgba(0,0,0,0.05);
             --sidebar-width: 280px;
+            --card-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
 
         body { display: flex; height: 100vh; background-color: var(--bg-light); overflow: hidden; }
 
         /* --- 2. SIDEBAR --- */
-        .sidebar {
-            width: var(--sidebar-width);
+        .sidebar { 
+            width: var(--sidebar-width); 
             background: linear-gradient(180deg, var(--primary-navy) 0%, var(--primary-dark) 100%);
-            color: white;
-            display: flex;
-            flex-direction: column;
-            transition: all 0.3s ease;
-            flex-shrink: 0;
-            z-index: 1000;
+            color: white; 
+            display: flex; flex-direction: column; flex-shrink: 0; 
+            transition: all 0.3s ease; z-index: 1000;
             box-shadow: 4px 0 20px rgba(0,0,0,0.1);
         }
-
-        .sidebar-header {
-            padding: 30px 20px;
-            text-align: center;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            background: rgba(0,0,0,0.1);
-        }
-
-        .sidebar-logo {
-            max-width: 130px;
-            height: auto;
-            margin-bottom: 15px;
-            filter: brightness(0) invert(1) drop-shadow(0 4px 6px rgba(0,0,0,0.2));
-        }
+        .sidebar-header { padding: 30px 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.1); }
+        .sidebar-logo { max-width: 130px; margin-bottom: 15px; filter: brightness(0) invert(1) drop-shadow(0 4px 6px rgba(0,0,0,0.2)); }
+        .sidebar-brand { font-size: 13px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; opacity: 0.9; }
         
-        .sidebar-brand { 
-            font-size: 13px; 
-            opacity: 0.9; 
-            letter-spacing: 1.5px; 
-            text-transform: uppercase; 
-            font-weight: 600;
-        }
-
-        .nav-menu {
-            list-style: none;
-            padding: 20px 15px;
-            flex: 1;
-            overflow-y: auto;
-        }
-
+        .nav-menu { list-style: none; padding: 20px 15px; flex: 1; overflow-y: auto; }
         .nav-item { margin-bottom: 8px; }
-
-        .nav-item a {
-            display: flex;
-            align-items: center;
-            padding: 14px 20px;
-            color: #bdc3c7;
-            text-decoration: none;
-            font-size: 15px;
-            font-weight: 500;
-            border-radius: 10px;
-            transition: all 0.2s ease;
-        }
-
-        .nav-item a:hover {
-            background-color: rgba(255,255,255,0.08);
-            color: white;
-            transform: translateX(5px);
-        }
-
-        .nav-item a.active {
-            background-color: var(--primary-green);
-            color: white;
-            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4);
-        }
-
+        .nav-item a { display: flex; align-items: center; padding: 14px 20px; color: #bdc3c7; text-decoration: none; font-size: 15px; font-weight: 500; border-radius: 10px; transition: all 0.2s; }
+        .nav-item a:hover { background: rgba(255,255,255,0.08); color: white; transform: translateX(5px); }
+        .nav-item a.active { background: var(--primary-green); color: white; box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4); }
         .nav-icon { margin-right: 15px; font-size: 18px; width: 25px; text-align: center; }
-
+        
         .sidebar-footer { padding: 25px; border-top: 1px solid rgba(255,255,255,0.05); }
-        .btn-logout {
-            width: 100%;
-            padding: 14px;
-            background-color: rgba(231, 76, 60, 0.9);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 14px;
-            display: flex; align-items: center; justify-content: center; gap: 10px;
-            transition: all 0.2s;
-            box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3);
-        }
-        .btn-logout:hover { background-color: #c0392b; transform: translateY(-2px); }
+        .btn-logout { width: 100%; padding: 14px; background: rgba(231, 76, 60, 0.9); color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.2s; box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3); }
+        .btn-logout:hover { background: #c0392b; transform: translateY(-2px); }
 
         /* --- 3. MAIN CONTENT --- */
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-            position: relative;
-        }
-        
-        .topbar {
-            background: white;
-            height: 70px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 40px;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.03);
-            position: sticky; top: 0; z-index: 100;
-        }
-        
-        .page-title { 
-            font-size: 22px; 
-            font-weight: 700; 
-            color: var(--primary-navy); 
-            letter-spacing: -0.5px;
-        }
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        .topbar { background: white; height: 70px; display: flex; justify-content: space-between; align-items: center; padding: 0 40px; box-shadow: 0 2px 15px rgba(0,0,0,0.03); flex-shrink: 0; }
+        .page-title { font-size: 22px; font-weight: 700; color: var(--primary-navy); letter-spacing: -0.5px; }
+        .user-profile { display: flex; align-items: center; gap: 15px; background: #f8f9fa; padding: 8px 15px; border-radius: 30px; border: 1px solid #e9ecef; }
+        .user-avatar { width: 36px; height: 36px; background: var(--primary-navy); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; }
 
-        .user-profile { 
-            display: flex; 
-            align-items: center; 
-            gap: 15px; 
-            background: #f8f9fa;
-            padding: 8px 15px;
-            border-radius: 30px;
-            border: 1px solid #e9ecef;
-        }
-        
-        .user-email { font-size: 13px; color: var(--text-dark); font-weight: 600; }
-        .user-avatar { 
-            width: 36px; height: 36px; 
-            background: var(--primary-navy); 
-            color: white;
-            border-radius: 50%; 
-            display: flex; align-items: center; justify-content: center; 
-            font-weight: bold; font-size: 14px;
-        }
+        /* --- 4. LAYOUT & CONTROLS --- */
+        .content { padding: 30px 40px; display: flex; flex-direction: column; gap: 25px; height: calc(100vh - 70px); overflow: hidden; }
 
-        /* --- 4. REPORT CONTENT --- */
-        .content { padding: 40px; max-width: 1400px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 20px; }
+        .card { background: white; padding: 25px; border-radius: 16px; box-shadow: var(--card-shadow); border: 1px solid white; display: flex; align-items: center; gap: 15px; flex-shrink: 0; flex-wrap: wrap; }
+        
+        .control-group { display: flex; align-items: center; gap: 10px; background: #f9f9f9; padding: 8px 15px; border-radius: 8px; border: 1px solid #eee; }
+        label { font-size: 12px; font-weight: 700; color: var(--text-dark); text-transform: uppercase; }
+        select, input[type="date"] { border: none; background: transparent; font-family: inherit; font-size: 14px; outline: none; color: var(--text-dark); cursor: pointer; }
 
-        /* Controls Panel */
-        .controls { 
-            background: white; padding: 25px 30px; border-radius: 16px; 
-            display: flex; gap: 25px; align-items: center; 
-            box-shadow: var(--card-shadow); 
-            border-top: 4px solid var(--primary-navy);
-        }
-        
-        .control-group { display: flex; align-items: center; gap: 10px; }
-        .control-group label { font-weight: 600; color: var(--text-dark); font-size: 14px; }
-        
-        select { 
-            padding: 10px 15px; border: 1px solid #e0e0e0; 
-            border-radius: 8px; font-size: 14px; outline: none; 
-            background: #fdfdfd; cursor: pointer; transition: 0.3s;
-        }
-        select:focus { border-color: var(--primary-navy); background: white; }
-        
-        .btn-refresh { 
-            padding: 10px 25px; background: #3498db; color: white; border: none; 
-            border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s; 
-            font-size: 14px;
-        }
-        .btn-refresh:hover { background: #2980b9; transform: translateY(-2px); }
-        
-        .btn-export { 
-            padding: 10px 25px; background: #27ae60; color: white; border: none; 
-            border-radius: 8px; cursor: pointer; font-weight: 600; 
-            margin-left: auto; transition: all 0.2s; font-size: 14px;
-        }
-        .btn-export:hover { background: #219150; transform: translateY(-2px); }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; color: white; }
+        .btn-blue { background: var(--primary-navy); box-shadow: 0 4px 10px rgba(26, 59, 110, 0.2); }
+        .btn-blue:hover { background: #132c52; transform: translateY(-2px); }
+        .btn-green { background: #27ae60; margin-left: auto; box-shadow: 0 4px 10px rgba(39, 174, 96, 0.2); }
+        .btn-green:hover { background: #219150; transform: translateY(-2px); }
 
-        /* Legend */
-        .legend { 
-            display: flex; gap: 20px; margin-bottom: 5px; 
-            font-size: 13px; color: var(--text-grey); font-weight: 500;
-        }
-        .legend-item { display: flex; align-items: center; gap: 8px; }
-        .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
-
-        /* Sheet Container */
-        .sheet-container { 
-            flex: 1; overflow: auto; background: white; 
-            border-radius: 16px; box-shadow: var(--card-shadow); 
-            position: relative; max-height: 65vh;
-        }
+        /* --- 5. REPORT TABLE (ORIGINAL DESIGN) --- */
+        .table-wrapper { flex: 1; overflow: auto; background: white; border-radius: 16px; box-shadow: var(--card-shadow); border: 1px solid white; position: relative; }
         
-        table { border-collapse: separate; border-spacing: 0; min-width: 100%; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 1000px; }
         
-        /* Cells */
-        th, td { 
-            border-right: 1px solid #f1f1f1; border-bottom: 1px solid #f1f1f1; 
-            padding: 12px 8px; text-align: center; font-size: 13px; 
-            white-space: nowrap; vertical-align: middle; 
-            height: 55px;
-        }
-
         /* Sticky Headers */
-        th { 
-            background: var(--primary-navy); color: white; 
-            position: sticky; top: 0; z-index: 10; 
-            height: 50px; font-weight: 600; 
-            text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;
-            border-right: 1px solid rgba(255,255,255,0.1);
-        }
+        th { background: #f8f9fa; padding: 15px 5px; text-align: center; font-size: 12px; color: var(--text-grey); font-weight: 700; border-bottom: 2px solid #eee; border-right: 1px solid #eee; position: sticky; top: 0; z-index: 10; }
+        th:first-child { text-align: left; padding-left: 20px; min-width: 200px; z-index: 20; left: 0; background: #f8f9fa; border-right: 2px solid #eee; }
+
+        /* Cells */
+        td { padding: 5px; border-bottom: 1px solid #f9f9f9; border-right: 1px solid #f9f9f9; text-align: center; vertical-align: middle; height: 60px; min-width: 90px; }
+        td:first-child { position: sticky; left: 0; z-index: 5; background: white; font-weight: 700; text-align: left; padding-left: 20px; color: var(--primary-navy); border-right: 2px solid #eee; font-size: 13px; }
         
-        /* Sticky First Column (Names) */
-        td:first-child, th:first-child { 
-            position: sticky; left: 0; z-index: 11; 
-            background: #fff; 
-            border-right: 2px solid #e0e0e0; 
-            font-weight: 700; text-align: left; 
-            min-width: 200px; padding-left: 20px; color: var(--primary-navy);
-        }
-        th:first-child { z-index: 12; background: var(--primary-navy); color: white; }
+        /* --- CELL STYLING (Solid Colors) --- */
+        .cell-box { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; width: 100%; gap: 2px; cursor: pointer; border-radius: 4px; transition: 0.1s; }
+        .cell-box:hover { filter: brightness(0.95); }
 
-        /* Row Hover */
-        tr:hover td { background-color: #f8f9fa; }
-        tr:hover td:first-child { background-color: #f8f9fa; }
+        .time-row { font-size: 10px; color: #333; white-space: nowrap; font-weight: 600; }
+        .big-letter { font-size: 16px; font-weight: 800; opacity: 0.8; }
+        .late-label { color: #c0392b; font-size: 9px; font-weight: 900; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px; }
+        .auto-tag { color: #e65100; font-size: 9px; font-style: italic; }
 
-        /* Status Colors (Subtler) */
-        .P { background-color: #f0fdf4; color: #166534; font-weight: 500; } /* Green */
-        .A { background-color: #fef2f2; color: #991b1b; font-weight: 600; } /* Red */
-        .L { background-color: #fffbeb; color: #b45309; font-weight: 600; } /* Orange */
-        .H { background-color: #f9fafb; color: #9ca3af; } /* Grey */
-        .OFF { background-color: #eff6ff; color: #1e40af; font-size: 11px; font-weight: 600; } /* Blue */
+        /* Status Classes (Solid Backgrounds) */
+        .P { background-color: #e8f5e9; color: #1b5e20; } /* Present Green */
+        .A { background-color: #ffebee; color: #b71c1c; } /* Absent Red */
+        .WO { background-color: #e3f2fd; color: #0d47a1; } /* Week Off Blue */
+        .L { background-color: #fff8e1; color: #e65100; } /* Late Yellow/Orange */
+        .HO { background-color: #f3e5f5; color: #4a148c; } /* Holiday Purple */
+        .Future { background-color: white; color: #eee; font-size: 20px; font-weight: bold; }
 
-        /* Text inside cells */
-        .time-box { display: flex; flex-direction: column; justify-content: center; line-height: 1.4; font-size: 11px; }
-        .late-badge { color: #d97706; font-weight: 800; font-size: 10px; display: block; text-transform: uppercase; }
+        /* --- 6. MODAL --- */
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(3px); justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 30px; border-radius: 16px; width: 380px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+        .modal-header { font-size: 18px; font-weight: 700; margin-bottom: 20px; color: var(--primary-navy); border-bottom: 1px solid #f0f0f0; padding-bottom: 15px; }
+        
+        .input-wrap { margin-bottom: 15px; }
+        .input-wrap label { display: block; margin-bottom: 6px; }
+        .input-wrap input, .input-wrap select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; background: #fcfcfc; font-size: 14px; }
+        
+        .modal-actions { margin-top: 25px; display: flex; gap: 10px; }
+        .btn-modal { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 13px; color: white; transition: 0.2s; }
+        .btn-save { background: var(--primary-navy); } 
+        .btn-reset { background: #e74c3c; } 
+        .btn-cancel { background: #95a5a6; }
 
-        #loadingOverlay { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(255,255,255,0.9); backdrop-filter: blur(5px);
-            z-index: 9999; display: flex; justify-content: center; align-items: center; 
-            font-size: 24px; color: var(--primary-navy); flex-direction: column; gap: 15px; font-weight: 600;
-        }
+        #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--primary-navy); font-weight: 600; font-size: 20px; }
 
-        @media (max-width: 900px) {
+        @media (max-width: 1024px) {
             .sidebar { position: fixed; left: -280px; height: 100%; }
             .sidebar.active { transform: translateX(280px); }
-            .content { padding: 20px; }
-            .topbar { padding: 0 20px; }
-            .controls { flex-direction: column; align-items: stretch; }
-            .btn-export { margin-left: 0; }
             .toggle-btn { display: block; font-size: 24px; cursor: pointer; margin-right: 15px; }
+            .content { padding: 20px; }
         }
-        @media (min-width: 901px) { .toggle-btn { display: none; } }
+        @media (min-width: 1025px) { .toggle-btn { display: none; } }
     </style>
-
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
 </head>
 <body>
 
     <div id="loadingOverlay">
-        <div style="font-size: 50px;">📅</div>
+        <div style="font-size: 50px; margin-bottom: 15px;">📊</div>
         <div>Generating Report...</div>
     </div>
 
     <nav class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <img src="synod_logo.png" alt="Synod Logo" class="sidebar-logo">
-            <div class="sidebar-brand">MANAGER PORTAL</div>
+            <img src="synod_logo.png" alt="Logo" class="sidebar-logo">
+            <div class="sidebar-brand">ADMIN PORTAL</div>
         </div>
 
         <ul class="nav-menu">
-            <li class="nav-item">
-                <a href="manager_dashboard.jsp"><span class="nav-icon">📊</span> Overview</a>
-            </li>
-            <li class="nav-item">
-                <a href="manager_mark_attendance.jsp"><span class="nav-icon">📍</span> My Attendance</a>
-            </li>
-            <li class="nav-item">
-                <a href="manager_manage_employees.jsp"><span class="nav-icon">👥</span> Assign Tasks</a>
-            </li>
-            <li class="nav-item">
-                <a href="manager_task_monitoring.jsp"><span class="nav-icon">📝</span> Task Monitoring</a>
-            </li>
-            <li class="nav-item">
-                <a href="manager_report.jsp" class="active"><span class="nav-icon">📅</span> View Attendance</a>
-            </li>
-            <li class="nav-item">
-                <a href="manager_settings.jsp"><span class="nav-icon">⚙️</span> My Settings</a>
-            </li>
+            <li class="nav-item"><a href="manager_dashboard.jsp"><span class="nav-icon">📊</span> Overview</a></li>
+            <li class="nav-item"><a href="manager_mark_attendance.jsp"><span class="nav-icon">📍</span> My Attendance</a></li>
+            <li class="nav-item"><a href="manager_manage_employees.jsp"><span class="nav-icon">👥</span> Assign Tasks</a></li>
+            <li class="nav-item"><a href="manager_task_monitoring.jsp"><span class="nav-icon">📝</span> Task Monitoring</a></li>
+            <li class="nav-item"><a href="manager_report.jsp" class="active"><span class="nav-icon">📅</span> View Attendance</a></li>
+            <li class="nav-item"><a href="manager_list_of_employees.jsp"><span class="nav-icon">📋</span> Directory</a></li>
+            <li class="nav-item"><a href="manager_settings.jsp"><span class="nav-icon">⚙️</span> My Settings</a></li>
         </ul>
 
         <div class="sidebar-footer">
@@ -323,22 +166,21 @@
         <header class="topbar">
             <div style="display:flex; align-items:center;">
                 <div class="toggle-btn" onclick="toggleSidebar()">☰</div>
-                <div class="page-title">Monthly Attendance</div>
+                <div class="page-title">Attendance Reports</div>
             </div>
             <div class="user-profile">
-                <span id="mgrEmail" class="user-email">Loading...</span>
-                <div class="user-avatar">M</div>
+                <span id="adminEmail">Loading...</span>
+                <div class="user-avatar">A</div>
             </div>
         </header>
 
         <div class="content">
             
-            <div class="controls">
+            <div class="card">
                 <div class="control-group">
                     <label>Month:</label>
                     <select id="monthSelect"></select>
                 </div>
-                
                 <div class="control-group">
                     <label>Year:</label>
                     <select id="yearSelect">
@@ -347,23 +189,57 @@
                         <option value="2026">2026</option>
                     </select>
                 </div>
+                <div class="control-group">
+                    <label>From:</label>
+                    <input type="date" id="startDate">
+                    <label>To:</label>
+                    <input type="date" id="endDate">
+                </div>
                 
-                <button onclick="generateReport()" class="btn-refresh">🔄 Refresh Data</button>
-                <button class="btn-export" onclick="exportToExcel()">📥 Download Excel</button>
+                <button class="btn btn-blue" onclick="generateReport()">🔄 Generate</button>
+                <button class="btn btn-green" onclick="exportToExcel()">📥 Export Excel</button>
             </div>
 
-            <div class="legend">
-                <div class="legend-item"><span class="dot" style="background:#d4edda;"></span> Present</div>
-                <div class="legend-item"><span class="dot" style="background:#fff8e1;"></span> Late</div>
-                <div class="legend-item"><span class="dot" style="background:#ffebee;"></span> Absent</div>
-                <div class="legend-item"><span class="dot" style="background:#e3f2fd;"></span> Weekly Off</div>
-            </div>
-
-            <div class="sheet-container">
-                <table id="attendanceTable">
-                    <thead><tr id="tableHeader"><th>Employee Name</th></tr></thead>
+            <div class="table-wrapper">
+                <table id="reportTable">
+                    <thead id="tableHead"></thead>
                     <tbody id="tableBody"></tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Edit Attendance Record</div>
+            
+            <input type="hidden" id="modalEmpEmail">
+            <input type="hidden" id="modalDateValue">
+            
+            <div class="input-wrap">
+                <label>Employee Name</label>
+                <input type="text" id="modalEmpName" disabled style="color:#777;">
+            </div>
+            
+            <div class="input-wrap">
+                <label>Selected Date</label>
+                <input type="text" id="modalDateDisplay" disabled style="color:#777;">
+            </div>
+            
+            <div class="input-wrap">
+                <label>Override Status</label>
+                <select id="modalStatus">
+                    <option value="P">Present (P)</option>
+                    <option value="A">Absent (A)</option>
+                    <option value="WO">Week Off (WO)</option>
+                    <option value="HO">Holiday (HO)</option>
+                </select>
+            </div>
+
+            <div class="modal-actions">
+                <button onclick="saveManual()" class="btn-modal btn-save">Save Change</button>
+                <button onclick="resetManual()" class="btn-modal btn-reset">Reset to Auto</button>
+                <button onclick="closeModal()" class="btn-modal btn-cancel">Cancel</button>
             </div>
         </div>
     </div>
@@ -377,224 +253,208 @@
             messagingSenderId: "734213881030",
             appId: "1:734213881030:web:bfdcee5a2ff293f87e6bc7"
         };
-
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        let allUsers = [];
-        let attendanceData = [];
-        const daysMap = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
+        let manualData = {};
         const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-        const monthSelect = document.getElementById("monthSelect");
-        monthNames.forEach((m, i) => {
-            const opt = document.createElement("option");
-            opt.value = i; 
-            opt.text = m;
-            if(i === new Date().getMonth()) opt.selected = true;
-            monthSelect.add(opt);
-        });
 
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                db.collection("users").doc(user.email).get().then(doc => {
-                    const role = doc.data().role;
-                    if (role !== 'manager' && role !== 'admin') {
-                        window.location.href = "login.jsp";
-                        return;
-                    } 
-                    document.getElementById("mgrEmail").innerText = user.email;
-                    fetchUsersAndReport();
-                });
-            } else {
-                window.location.replace("index.html");
-            }
-        });
-
-        function fetchUsersAndReport() {
-            document.getElementById("loadingOverlay").style.display = "flex";
-            
-            db.collection("users").get().then(userSnap => {
-                allUsers = [];
-                userSnap.forEach(doc => {
-                    const d = doc.data();
-                    if(d.role !== 'admin') {
-                        allUsers.push({
-                            email: (d.email || "").toLowerCase(), 
-                            name: d.fullName || d.email || "Unknown",
-                            shifts: d.shiftTimings || {} 
-                        });
-                    }
-                });
-                
-                allUsers.sort(function(a, b) {
-                    return (a.name || "").localeCompare(b.name || "");
-                });
-                generateReport();
-            }).catch(e => {
-                alert("Error: " + e.message);
-                document.getElementById("loadingOverlay").style.display = "none";
+        // INIT
+        window.onload = function() {
+            const monthSel = document.getElementById("monthSelect");
+            monthNames.forEach((m, i) => {
+                let opt = new Option(m, i);
+                if(i === new Date().getMonth()) opt.selected = true;
+                monthSel.add(opt);
             });
-        }
 
-        function generateReport() {
-            const month = parseInt(document.getElementById("monthSelect").value);
-            const year = parseInt(document.getElementById("yearSelect").value);
-            const start = new Date(year, month, 1);
-            const end = new Date(year, month + 1, 0, 23, 59, 59);
-
-            document.getElementById("loadingOverlay").style.display = "flex";
-
-            const collectionName = "attendance_2025"; 
-
-            db.collection(collectionName)
-                .where("timestamp", ">=", start)
-                .where("timestamp", "<=", end)
-                .get()
-                .then(snap => {
-                    attendanceData = [];
-                    snap.forEach(doc => {
-                        const d = doc.data();
-                        if(d.email) d.email = d.email.toLowerCase();
-                        attendanceData.push(d);
-                    });
-                    renderTable(month, year);
-                    document.getElementById("loadingOverlay").style.display = "none";
-                })
-                .catch(err => {
-                    console.log("Error fetching data", err);
-                    renderTable(month, year); 
-                    document.getElementById("loadingOverlay").style.display = "none";
-                });
-        }
-
-        function renderTable(month, year) {
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-            const tableHeader = document.getElementById("tableHeader");
-            const tableBody = document.getElementById("tableBody");
-            
             const today = new Date();
-            today.setHours(0,0,0,0); 
-            
-            let headerHTML = "<th>Employee Name</th>";
-            for(let i=1; i<=daysInMonth; i++) {
-                headerHTML += "<th>" + i + "</th>";
-            }
-            tableHeader.innerHTML = headerHTML;
+            document.getElementById("startDate").valueAsDate = new Date(today.getFullYear(), today.getMonth(), 1);
+            document.getElementById("endDate").valueAsDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
-            let bodyHTML = "";
-
-            allUsers.forEach(user => {
-                bodyHTML += "<tr><td>" + user.name + "</td>";
-
-                for(let d=1; d<=daysInMonth; d++) {
-                    const colDate = new Date(year, month, d);
-                    colDate.setHours(0,0,0,0); 
-                    
-                    if(colDate.getTime() > today.getTime()) {
-                        bodyHTML += "<td class='H'>-</td>";
-                        continue;
-                    }
-
-                    const dayName = daysMap[colDate.getDay()]; 
-                    
-                    let requiredTime = user.shifts[dayName];
-                    if(!requiredTime && dayName === "Sun") requiredTime = "OFF";
-                    if(!requiredTime) requiredTime = "09:30"; 
-
-                    if (requiredTime === "OFF") {
-                        bodyHTML += "<td class='OFF'>OFF</td>";
-                        continue;
-                    }
-
-                    const dailyRecs = attendanceData.filter(function(a) {
-                        if(!a.timestamp) return false;
-                        const recDate = new Date(a.timestamp.seconds * 1000);
-                        return a.email === user.email && recDate.getDate() === d;
+            auth.onAuthStateChanged(user => {
+                if(user) {
+                    db.collection("users").doc(user.email).get().then(doc => {
+                        const role = doc.data().role;
+                        if(role === 'admin' || role === 'manager') {
+                            document.getElementById("adminEmail").innerText = user.email;
+                            if(role==='manager') document.querySelector('.sidebar-brand').innerText = "MANAGER PORTAL";
+                            generateReport();
+                        } else window.location.href = "index.html";
                     });
+                } else window.location.href = "index.html";
+            });
+        };
 
-                    const inRec = dailyRecs.find(function(r) { return r.type === 'IN'; });
-                    const outRec = dailyRecs.find(function(r) { return r.type === 'OUT'; });
+        async function generateReport() {
+            const startVal = document.getElementById("startDate").value;
+            const endVal = document.getElementById("endDate").value;
+            document.getElementById("loadingOverlay").style.display = "flex";
 
+            const dates = getDates(new Date(startVal), new Date(endVal));
+            
+            // HEADER (Simple Numbers)
+            let headRow = "<tr><th>EMPLOYEE NAME</th>";
+            dates.forEach(d => headRow += "<th>" + d.getDate() + "</th>");
+            headRow += "</tr>";
+            document.getElementById("tableHead").innerHTML = headRow;
+
+            // DATA FETCH
+            const [usersSnap, attSnap, manSnap] = await Promise.all([
+                db.collection("users").where("role", "!=", "admin").get(),
+                db.collection("attendance_2025").where("timestamp", ">=", new Date(startVal)).where("timestamp", "<=", new Date(new Date(endVal).setHours(23,59,59))).get(),
+                db.collection("attendance_manual").get()
+            ]);
+
+            // PROCESS DATA
+            let attMap = {};
+            attSnap.forEach(doc => {
+                const d = doc.data();
+                const key = d.email + "_" + new Date(d.timestamp.seconds*1000).toDateString();
+                if(!attMap[key]) attMap[key] = { in: null, out: null };
+                
+                const timeStr = new Date(d.timestamp.seconds*1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                if(d.type === 'IN') {
+                    if(!attMap[key].in || d.timestamp.seconds < attMap[key].in.seconds) attMap[key].in = { time: timeStr, obj: d.timestamp };
+                } else {
+                    if(!attMap[key].out || d.timestamp.seconds > attMap[key].out.seconds) attMap[key].out = { time: timeStr };
+                }
+            });
+
+            manualData = {};
+            manSnap.forEach(doc => manualData[doc.id] = doc.data().status);
+
+            // BUILD ROWS
+            let rowsHtml = "";
+            usersSnap.forEach(uDoc => {
+                const u = uDoc.data();
+                const shifts = u.shiftTimings || {};
+                let row = "<tr><td>" + (u.fullName || uDoc.id) + "</td>";
+
+                dates.forEach(d => {
+                    const dateKey = uDoc.id + "_" + d.toDateString();
+                    const isoDate = d.toISOString().split('T')[0];
+                    const manualId = uDoc.id + "_" + isoDate;
+                    const clickAction = "openEdit('" + uDoc.id + "', '" + (u.fullName || '').replace(/'/g, "\\'") + "', '" + isoDate + "')";
+
+                    let cellHtml = "";
                     let cellClass = "";
-                    let cellContent = "";
 
-                    if (!inRec) {
-                        cellClass = "A";
-                        cellContent = "Absent";
-                    } else {
-                        const inTimeObj = new Date(inRec.timestamp.seconds * 1000);
-                        const inTimeStr = inTimeObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false});
+                    // 1. Manual Override
+                    if(manualData[manualId]) {
+                        const s = manualData[manualId];
+                        cellClass = s; 
                         
-                        let outTimeStr = "--:--";
-                        if(outRec) {
-                            const outTimeObj = new Date(outRec.timestamp.seconds * 1000);
-                            outTimeStr = outTimeObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false});
-                        }
-
-                        const timeParts = requiredTime.split(":");
-                        const reqH = parseInt(timeParts[0]);
-                        const reqM = parseInt(timeParts[1]);
-                        
-                        const isLate = (inTimeObj.getHours() > reqH) || (inTimeObj.getHours() === reqH && inTimeObj.getMinutes() > reqM);
-
-                        if(isLate) {
-                            cellClass = "L";
-                            cellContent = "<div class='time-box'><span class='late-badge'>LATE</span>" + inTimeStr + " - " + outTimeStr + "</div>";
+                        if(s === 'P') {
+                            cellHtml = "<div class='cell-box'><span class='time-row'>Manual</span></div>";
                         } else {
-                            cellClass = "P";
-                            cellContent = "<div class='time-box'>" + inTimeStr + " - " + outTimeStr + "</div>";
+                            cellHtml = "<div class='cell-box'><span class='big-letter'>" + s + "</span></div>";
+                        }
+                    } 
+                    // 2. Auto Logic
+                    else {
+                        const dayName = d.toLocaleDateString('en-US', {weekday: 'short'});
+                        const shiftStart = shifts[dayName] || "09:30";
+                        const isOff = (shiftStart === "OFF" || dayName === "Sun");
+
+                        if(isOff) {
+                            cellClass = "WO";
+                            cellHtml = "<div class='cell-box'><span class='big-letter'>WO</span></div>";
+                        } else if(d > new Date()) {
+                            cellHtml = "<div class='cell-box'><span class='Future'>-</span></div>";
+                        } else {
+                            const mapKey = uDoc.id + "_" + d.toDateString();
+                            const record = attMap[mapKey];
+
+                            if(record && record.in) {
+                                // PRESENT or LATE
+                                const inTime = record.in.time;
+                                let outTime = record.out ? record.out.time : "--:--";
+                                
+                                // Auto Clock Out Visual
+                                const todayZero = new Date(); todayZero.setHours(0,0,0,0);
+                                if (!record.out && d < todayZero) {
+                                    outTime = "06:00 PM <span class='auto-tag'></span>";
+                                }
+
+                                // Check Late
+                                const inDateObj = new Date(record.in.obj.seconds * 1000);
+                                const [sH, sM] = shiftStart.split(":").map(Number);
+                                let isLate = false;
+                                if(inDateObj.getHours() > sH || (inDateObj.getHours() === sH && inDateObj.getMinutes() > sM)) isLate = true;
+
+                                cellClass = isLate ? "L" : "P";
+                                let label = isLate ? "<div class='late-label'>LATE</div>" : "";
+                                
+                                cellHtml = "<div class='cell-box'>" + label + 
+                                           "<div class='time-row'>IN: " + inTime + "</div>" +
+                                           "<div class='time-row'>OUT: " + outTime + "</div></div>";
+                            } else {
+                                // ABSENT
+                                cellClass = "A";
+                                cellHtml = "<div class='cell-box'><span class='big-letter'>A</span></div>";
+                            }
                         }
                     }
-                    bodyHTML += "<td class='" + cellClass + "'>" + cellContent + "</td>";
-                }
-                bodyHTML += "</tr>";
+                    
+                    row += "<td class='" + cellClass + "' onclick=\"" + clickAction + "\">" + cellHtml + "</td>";
+                });
+                row += "</tr>";
+                rowsHtml += row;
             });
-            tableBody.innerHTML = bodyHTML;
+
+            document.getElementById("tableBody").innerHTML = rowsHtml;
+            document.getElementById("loadingOverlay").style.display = "none";
+        }
+
+        function getDates(startDate, stopDate) {
+            var dateArray = [];
+            var currentDate = startDate;
+            while (currentDate <= stopDate) {
+                dateArray.push(new Date (currentDate));
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+            return dateArray;
+        }
+
+        // --- MODAL & ACTIONS ---
+        function openEdit(email, name, dateStr) {
+            document.getElementById("modalEmpName").value = name;
+            document.getElementById("modalEmpEmail").value = email;
+            document.getElementById("modalDateDisplay").value = dateStr;
+            document.getElementById("modalDateValue").value = dateStr;
+            document.getElementById("editModal").style.display = "flex";
+        }
+        function closeModal() { document.getElementById("editModal").style.display = "none"; }
+
+        function saveManual() {
+            const email = document.getElementById("modalEmpEmail").value;
+            const dateStr = document.getElementById("modalDateValue").value;
+            const status = document.getElementById("modalStatus").value;
+            const docId = email + "_" + dateStr;
+
+            db.collection("attendance_manual").doc(docId).set({
+                email, dateString: dateStr, status,
+                updatedBy: auth.currentUser.email, timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => { generateReport(); closeModal(); });
+        }
+
+        function resetManual() {
+            if(!confirm("Reset to auto?")) return;
+            const email = document.getElementById("modalEmpEmail").value;
+            const dateStr = document.getElementById("modalDateValue").value;
+            const docId = email + "_" + dateStr;
+            db.collection("attendance_manual").doc(docId).delete().then(() => { generateReport(); closeModal(); });
         }
 
         function exportToExcel() {
-            let exportData = [];
-            const month = parseInt(document.getElementById("monthSelect").value);
-            const year = parseInt(document.getElementById("yearSelect").value);
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-            allUsers.forEach(user => {
-                let row = { "Employee": user.name };
-                
-                for(let d=1; d<=daysInMonth; d++) {
-                      const dailyRecs = attendanceData.filter(function(a) {
-                        if(!a.timestamp) return false;
-                        const recDate = new Date(a.timestamp.seconds * 1000);
-                        return a.email === user.email && recDate.getDate() === d;
-                    });
-                    
-                    const inRec = dailyRecs.find(function(r) { return r.type === 'IN'; });
-                    const outRec = dailyRecs.find(function(r) { return r.type === 'OUT'; });
-
-                    if(inRec) {
-                        const iTime = new Date(inRec.timestamp.seconds * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-                        const oTime = outRec ? new Date(outRec.timestamp.seconds * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : "--";
-                        row[d] = iTime + " - " + oTime;
-                    } else {
-                        row[d] = "Absent";
-                    }
-                }
-                exportData.push(row);
-            });
-
-            const ws = XLSX.utils.json_to_sheet(exportData);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Attendance");
-            XLSX.writeFile(wb, "Attendance_Report.xlsx");
+            var wb = XLSX.utils.table_to_book(document.getElementById('reportTable'), {sheet:"Attendance"});
+            XLSX.writeFile(wb, 'Attendance_Report.xlsx');
         }
 
-        function logout(){ auth.signOut().then(() => window.location.href = "index.html"); }
-        function toggleSidebar() { document.getElementById("sidebar").classList.toggle("open"); }
+        function logout() { auth.signOut().then(() => window.location.href="index.html"); }
+        function toggleSidebar() { document.getElementById("sidebar").classList.toggle("active"); }
     </script>
 </body>
 </html>
-
-
-

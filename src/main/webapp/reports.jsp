@@ -17,7 +17,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
     <style>
-        /* --- 1. RESET & CORE THEME --- */
+        /* --- 1. RESET & CORE THEME (Matches Admin) --- */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         :root {
             --primary-navy: #1a3b6e;
@@ -57,113 +57,88 @@
         .btn-logout:hover { background: #c0392b; transform: translateY(-2px); }
 
         /* --- 3. MAIN CONTENT --- */
-        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; position: relative; }
-        .topbar { background: white; height: 70px; display: flex; justify-content: space-between; align-items: center; padding: 0 40px; box-shadow: 0 2px 15px rgba(0,0,0,0.03); position: sticky; top: 0; z-index: 50; }
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        .topbar { background: white; height: 70px; display: flex; justify-content: space-between; align-items: center; padding: 0 40px; box-shadow: 0 2px 15px rgba(0,0,0,0.03); flex-shrink: 0; }
         .page-title { font-size: 22px; font-weight: 700; color: var(--primary-navy); letter-spacing: -0.5px; }
         .user-profile { display: flex; align-items: center; gap: 15px; background: #f8f9fa; padding: 8px 15px; border-radius: 30px; border: 1px solid #e9ecef; }
         .user-avatar { width: 36px; height: 36px; background: var(--primary-navy); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; }
 
-        .content { padding: 30px 40px; max-width: 1600px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 20px; height: calc(100vh - 70px); }
+        /* --- 4. LAYOUT & CONTROLS --- */
+        .content { padding: 30px 40px; display: flex; flex-direction: column; gap: 25px; height: calc(100vh - 70px); overflow: hidden; }
 
-        /* --- 4. CONTROLS CARD --- */
-        .controls-card { background: white; padding: 20px 30px; border-radius: 16px; display: flex; gap: 20px; align-items: center; box-shadow: var(--card-shadow); flex-shrink: 0; border: 1px solid white; }
+        .card { background: white; padding: 25px; border-radius: 16px; box-shadow: var(--card-shadow); border: 1px solid white; display: flex; align-items: center; gap: 15px; flex-shrink: 0; flex-wrap: wrap; }
         
-        .control-group { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; color: var(--text-dark); }
-        select { padding: 10px 15px; border: 1px solid #e0e0e0; border-radius: 8px; outline: none; background: #f9f9f9; font-size: 14px; cursor: pointer; transition: 0.2s; }
-        select:hover { background: #fff; border-color: var(--primary-navy); }
+        .control-group { display: flex; align-items: center; gap: 10px; background: #f9f9f9; padding: 8px 15px; border-radius: 8px; border: 1px solid #eee; }
+        label { font-size: 12px; font-weight: 700; color: var(--text-dark); text-transform: uppercase; }
+        select, input[type="date"] { border: none; background: transparent; font-family: inherit; font-size: 14px; outline: none; color: var(--text-dark); cursor: pointer; }
 
-        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; color: white; display: flex; align-items: center; gap: 8px; font-size: 13px; transition: all 0.2s; }
-        .btn:hover { transform: translateY(-2px); opacity: 0.9; }
-        .btn-refresh { background: #3498db; box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3); }
-        .btn-excel { background: #27ae60; margin-left: auto; box-shadow: 0 4px 10px rgba(39, 174, 96, 0.3); }
-        .btn-print { background: #f39c12; box-shadow: 0 4px 10px rgba(243, 156, 18, 0.3); }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; color: white; }
+        .btn-blue { background: var(--primary-navy); box-shadow: 0 4px 10px rgba(26, 59, 110, 0.2); }
+        .btn-blue:hover { background: #132c52; transform: translateY(-2px); }
+        .btn-green { background: #27ae60; margin-left: auto; box-shadow: 0 4px 10px rgba(39, 174, 96, 0.2); }
+        .btn-green:hover { background: #219150; transform: translateY(-2px); }
 
-        /* Legend */
-        .legend { display: flex; gap: 25px; font-size: 12px; color: var(--text-grey); font-weight: 600; padding: 5px 10px; }
-        .legend-item { display: flex; align-items: center; gap: 8px; }
-        .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-
-        /* --- 5. TABLE AREA --- */
-        .table-container { flex: 1; overflow: auto; background: white; border-radius: 16px; box-shadow: var(--card-shadow); border: 1px solid white; position: relative; }
-        table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        /* --- 5. REPORT TABLE (ORIGINAL DESIGN) --- */
+        .table-wrapper { flex: 1; overflow: auto; background: white; border-radius: 16px; box-shadow: var(--card-shadow); border: 1px solid white; position: relative; }
         
-        /* Sticky Header */
-        th { background: #f8f9fa; color: var(--text-grey); position: sticky; top: 0; z-index: 10; height: 50px; font-weight: 700; font-size: 12px; text-transform: uppercase; padding: 0 10px; border-bottom: 2px solid #eee; border-right: 1px solid #f0f0f0; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 1000px; }
         
+        /* Sticky Headers */
+        th { background: #f8f9fa; padding: 15px 5px; text-align: center; font-size: 12px; color: var(--text-grey); font-weight: 700; border-bottom: 2px solid #eee; border-right: 1px solid #eee; position: sticky; top: 0; z-index: 10; }
+        th:first-child { text-align: left; padding-left: 20px; min-width: 200px; z-index: 20; left: 0; background: #f8f9fa; border-right: 2px solid #eee; }
+
         /* Cells */
-        td { border-right: 1px solid #f9f9f9; border-bottom: 1px solid #f9f9f9; padding: 8px; text-align: center; font-size: 12px; white-space: nowrap; height: 65px; vertical-align: middle; min-width: 110px; }
+        td { padding: 5px; border-bottom: 1px solid #f9f9f9; border-right: 1px solid #f9f9f9; text-align: center; vertical-align: middle; height: 60px; min-width: 90px; }
+        td:first-child { position: sticky; left: 0; z-index: 5; background: white; font-weight: 700; text-align: left; padding-left: 20px; color: var(--primary-navy); border-right: 2px solid #eee; font-size: 13px; }
         
-        /* Sticky First Column */
-        td:first-child, th:first-child { position: sticky; left: 0; z-index: 11; background: white; border-right: 2px solid #eee; font-weight: 700; text-align: left; padding-left: 20px; min-width: 200px; color: var(--primary-navy); }
-        th:first-child { z-index: 12; background: #f8f9fa; }
+        /* --- CELL STYLING (Solid Colors) --- */
+        .cell-box { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; width: 100%; gap: 2px; cursor: pointer; border-radius: 4px; transition: 0.1s; }
+        .cell-box:hover { filter: brightness(0.95); }
 
-        /* Hover */
-        tr:hover td { background-color: #fcfcfc; }
-        td.cell-clickable { cursor: pointer; transition: 0.1s; }
-        td.cell-clickable:hover { background-color: #e3f2fd !important; outline: 2px solid var(--primary-navy); z-index: 5; }
+        .time-row { font-size: 10px; color: #333; white-space: nowrap; font-weight: 600; }
+        .big-letter { font-size: 16px; font-weight: 800; opacity: 0.8; }
+        .late-label { color: #c0392b; font-size: 9px; font-weight: 900; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px; }
+        .auto-tag { color: #e65100; font-size: 9px; font-style: italic; }
 
-        /* Status Colors (Subtle Pastels) */
-        .P { background: #e8f5e9; color: #27ae60; }
-        .A { background: #ffebee; color: #c0392b; font-weight: 700; }
-        .L { background: #fff3cd; color: #d35400; }
-        .WO { background: #e3f2fd; color: #2980b9; font-weight: 700; }
-        .HO { background: #f3e5f5; color: #8e44ad; font-weight: 700; }
-        .Future { background: white; color: #eee; }
-
-        /* Cell Content */
-        .time-box { display: flex; flex-direction: column; justify-content: center; gap: 3px; font-size: 11px; line-height: 1.2; }
-        .time-row { font-family: monospace; letter-spacing: -0.5px; color: #444; }
-        .late-badge { color: #c0392b; font-weight: 800; font-size: 9px; display: block; margin-bottom: 2px; text-transform: uppercase; }
-        .manual-dot { width: 6px; height: 6px; background: #333; border-radius: 50%; position: absolute; top: 5px; right: 5px; }
+        /* Status Classes (Solid Backgrounds) */
+        .P { background-color: #e8f5e9; color: #1b5e20; } /* Present Green */
+        .A { background-color: #ffebee; color: #b71c1c; } /* Absent Red */
+        .WO { background-color: #e3f2fd; color: #0d47a1; } /* Week Off Blue */
+        .L { background-color: #fff8e1; color: #e65100; } /* Late Yellow/Orange */
+        .HO { background-color: #f3e5f5; color: #4a148c; } /* Holiday Purple */
+        .Future { background-color: white; color: #eee; font-size: 20px; font-weight: bold; }
 
         /* --- 6. MODAL --- */
-        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 30px; border-radius: 16px; width: 400px; box-shadow: 0 20px 50px rgba(0,0,0,0.2); }
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(3px); justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 30px; border-radius: 16px; width: 380px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
         .modal-header { font-size: 18px; font-weight: 700; margin-bottom: 20px; color: var(--primary-navy); border-bottom: 1px solid #f0f0f0; padding-bottom: 15px; }
         
-        .input-group { margin-bottom: 15px; }
-        .input-group label { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 700; color: var(--text-dark); text-transform: uppercase; }
-        .input-group input, .input-group select { width: 100%; padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px; background: #f9f9f9; font-size: 14px; }
+        .input-wrap { margin-bottom: 15px; }
+        .input-wrap label { display: block; margin-bottom: 6px; }
+        .input-wrap input, .input-wrap select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; background: #fcfcfc; font-size: 14px; }
         
         .modal-actions { margin-top: 25px; display: flex; gap: 10px; }
         .btn-modal { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 13px; color: white; transition: 0.2s; }
-        .btn-save { background: var(--primary-navy); }
-        .btn-reset { background: #e74c3c; }
+        .btn-save { background: var(--primary-navy); } 
+        .btn-reset { background: #e74c3c; } 
         .btn-cancel { background: #95a5a6; }
 
-        /* --- PRINT --- */
-        @media print {
-            @page { size: landscape; margin: 5mm; }
-            body { background: white; }
-            .sidebar, .topbar, .controls-card, .legend, .modal, #loading { display: none !important; }
-            .main-content { overflow: visible; height: auto; }
-            .content { padding: 0; margin: 0; height: auto; overflow: visible; }
-            .table-container { box-shadow: none; border: 1px solid #000; overflow: visible; height: auto; }
-            table { width: 100%; font-size: 9px; border-collapse: collapse; }
-            th, td { border: 1px solid #000 !important; padding: 4px; height: auto; color: #000 !important; }
-            th { background: #ddd !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .manual-dot { display: none; }
-            .P { background-color: #e8f5e9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .A { background-color: #ffebee !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .WO { background-color: #e3f2fd !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        }
-
-        #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--primary-navy); font-weight: 600; }
+        #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--primary-navy); font-weight: 600; font-size: 20px; }
 
         @media (max-width: 1024px) {
             .sidebar { position: fixed; left: -280px; height: 100%; }
             .sidebar.active { transform: translateX(280px); }
-            .content { padding: 20px; }
             .toggle-btn { display: block; font-size: 24px; cursor: pointer; margin-right: 15px; }
+            .content { padding: 20px; }
         }
         @media (min-width: 1025px) { .toggle-btn { display: none; } }
     </style>
 </head>
 <body>
 
-    <div id="loading">
-        <div style="font-size: 50px;">📅</div>
-        <div style="margin-top:15px;">Generating Report...</div>
+    <div id="loadingOverlay">
+        <div style="font-size: 50px; margin-bottom: 15px;">📊</div>
+        <div>Generating Report...</div>
     </div>
 
     <nav class="sidebar" id="sidebar">
@@ -182,7 +157,6 @@
             <li class="nav-item"><a href="payroll.jsp"><span class="nav-icon">💰</span> Payroll</a></li>
             <li class="nav-item"><a href="admin_settings.jsp"><span class="nav-icon">⚙️</span> Settings</a></li>
         </ul>
-
         <div class="sidebar-footer">
             <button onclick="logout()" class="btn-logout"><span>🚪</span> Sign Out</button>
         </div>
@@ -195,14 +169,14 @@
                 <div class="page-title">Attendance Reports</div>
             </div>
             <div class="user-profile">
-                <span id="currentUserEmail">Checking auth...</span>
+                <span id="adminEmail">Loading...</span>
                 <div class="user-avatar">A</div>
             </div>
         </header>
 
         <div class="content">
             
-            <div class="controls-card">
+            <div class="card">
                 <div class="control-group">
                     <label>Month:</label>
                     <select id="monthSelect"></select>
@@ -215,23 +189,20 @@
                         <option value="2026">2026</option>
                     </select>
                 </div>
-                <button onclick="fetchData()" class="btn btn-refresh">🔄 Refresh</button>
-                <button onclick="window.print()" class="btn btn-print">🖨️ Print</button>
-                <button onclick="exportToExcel()" class="btn btn-excel">📥 Excel</button>
+                <div class="control-group">
+                    <label>From:</label>
+                    <input type="date" id="startDate">
+                    <label>To:</label>
+                    <input type="date" id="endDate">
+                </div>
+                
+                <button class="btn btn-blue" onclick="generateReport()">🔄 Generate</button>
+                <button class="btn btn-green" onclick="exportToExcel()">📥 Export Excel</button>
             </div>
 
-            <div class="legend">
-                <div class="legend-item"><span class="dot P" style="background:#27ae60;"></span> Present</div>
-                <div class="legend-item"><span class="dot L" style="background:#d35400;"></span> Late</div>
-                <div class="legend-item"><span class="dot A" style="background:#c0392b;"></span> Absent</div>
-                <div class="legend-item"><span class="dot WO" style="background:#2980b9;"></span> Week Off</div>
-                <div class="legend-item"><span class="dot HO" style="background:#8e44ad;"></span> Holiday</div>
-                <div style="margin-left:auto; color:var(--primary-navy);">* Click any cell to edit</div>
-            </div>
-
-            <div class="table-container">
-                <table id="attendanceTable">
-                    <thead><tr id="tableHeader"></tr></thead>
+            <div class="table-wrapper">
+                <table id="reportTable">
+                    <thead id="tableHead"></thead>
                     <tbody id="tableBody"></tbody>
                 </table>
             </div>
@@ -240,22 +211,23 @@
 
     <div id="editModal" class="modal">
         <div class="modal-content">
-            <div class="modal-header">Edit Record</div>
+            <div class="modal-header">Edit Attendance Record</div>
             
-            <div class="input-group">
+            <input type="hidden" id="modalEmpEmail">
+            <input type="hidden" id="modalDateValue">
+            
+            <div class="input-wrap">
                 <label>Employee Name</label>
-                <input type="text" id="modalEmpName" disabled>
-                <input type="hidden" id="modalEmpEmail">
+                <input type="text" id="modalEmpName" disabled style="color:#777;">
             </div>
-
-            <div class="input-group">
-                <label>Date</label>
-                <input type="text" id="modalDateDisplay" disabled>
-                <input type="hidden" id="modalDateValue">
+            
+            <div class="input-wrap">
+                <label>Selected Date</label>
+                <input type="text" id="modalDateDisplay" disabled style="color:#777;">
             </div>
-
-            <div class="input-group">
-                <label>Status Override</label>
+            
+            <div class="input-wrap">
+                <label>Override Status</label>
                 <select id="modalStatus">
                     <option value="P">Present (P)</option>
                     <option value="A">Absent (A)</option>
@@ -265,15 +237,14 @@
             </div>
 
             <div class="modal-actions">
-                <button onclick="saveManual()" class="btn-modal btn-save">Save</button>
-                <button onclick="resetManual()" class="btn-modal btn-reset">Reset</button>
+                <button onclick="saveManual()" class="btn-modal btn-save">Save Change</button>
+                <button onclick="resetManual()" class="btn-modal btn-reset">Reset to Auto</button>
                 <button onclick="closeModal()" class="btn-modal btn-cancel">Cancel</button>
             </div>
         </div>
     </div>
 
     <script>
-        // CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyBzdM77WwTSkxvF0lsxf2WLNLhjuGyNvQQ",
             authDomain: "attendancewebapp-ef02a.firebaseapp.com",
@@ -283,143 +254,171 @@
             appId: "1:734213881030:web:bfdcee5a2ff293f87e6bc7"
         };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
         const auth = firebase.auth();
+        const db = firebase.firestore();
 
-        let allUsers = [];
-        let autoData = [];
         let manualData = {};
-        const daysMap = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
         const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
         // INIT
-        const monthSel = document.getElementById("monthSelect");
-        monthNames.forEach((m, i) => {
-            let opt = new Option(m, i);
-            if(i === new Date().getMonth()) opt.selected = true;
-            monthSel.add(opt);
-        });
-
-        auth.onAuthStateChanged(user => {
-            if(user) {
-                document.getElementById("currentUserEmail").innerText = user.email;
-                fetchData();
-            } else {
-                window.location.href = "index.html";
-            }
-        });
-
-        // FETCH
-        function fetchData() {
-            document.getElementById("loading").style.display = "flex";
-            const m = parseInt(monthSel.value);
-            const y = parseInt(document.getElementById("yearSelect").value);
-            const start = new Date(y, m, 1);
-            const end = new Date(y, m + 1, 0, 23, 59, 59);
-
-            Promise.all([
-                db.collection("users").get(),
-                db.collection("attendance_2025").where("timestamp", ">=", start).where("timestamp", "<=", end).get(),
-                db.collection("attendance_manual").get()
-            ]).then(([usersSnap, autoSnap, manualSnap]) => {
-                
-                allUsers = [];
-                usersSnap.forEach(doc => {
-                    const d = doc.data();
-                    if(d.role !== 'admin') allUsers.push({ email: d.email, name: d.fullName || d.email, shifts: d.shiftTimings || {} });
-                });
-                allUsers.sort((a,b) => a.name.localeCompare(b.name));
-
-                autoData = [];
-                autoSnap.forEach(doc => autoData.push(doc.data()));
-
-                manualData = {};
-                manualSnap.forEach(doc => manualData[doc.id] = doc.data().status);
-
-                renderTable(m, y);
-                document.getElementById("loading").style.display = "none";
+        window.onload = function() {
+            const monthSel = document.getElementById("monthSelect");
+            monthNames.forEach((m, i) => {
+                let opt = new Option(m, i);
+                if(i === new Date().getMonth()) opt.selected = true;
+                monthSel.add(opt);
             });
-        }
 
-        // RENDER TABLE
-        function renderTable(m, y) {
-            const daysInM = new Date(y, m + 1, 0).getDate();
-            const tHead = document.getElementById("tableHeader");
-            const tBody = document.getElementById("tableBody");
-            const today = new Date(); today.setHours(0,0,0,0);
+            const today = new Date();
+            document.getElementById("startDate").valueAsDate = new Date(today.getFullYear(), today.getMonth(), 1);
+            document.getElementById("endDate").valueAsDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
-            let hHtml = "<th>Employee Name</th>";
-            for(let i=1; i<=daysInM; i++) hHtml += "<th>" + i + "</th>";
-            tHead.innerHTML = hHtml;
+            auth.onAuthStateChanged(user => {
+                if(user) {
+                    db.collection("users").doc(user.email).get().then(doc => {
+                        const role = doc.data().role;
+                        if(role === 'admin' || role === 'manager') {
+                            document.getElementById("adminEmail").innerText = user.email;
+                            if(role==='manager') document.querySelector('.sidebar-brand').innerText = "MANAGER PORTAL";
+                            generateReport();
+                        } else window.location.href = "index.html";
+                    });
+                } else window.location.href = "index.html";
+            });
+        };
 
-            let bHtml = "";
-            allUsers.forEach(user => {
-                bHtml += "<tr><td>" + user.name + "</td>";
+        async function generateReport() {
+            const startVal = document.getElementById("startDate").value;
+            const endVal = document.getElementById("endDate").value;
+            document.getElementById("loadingOverlay").style.display = "flex";
+
+            const dates = getDates(new Date(startVal), new Date(endVal));
+            
+            // HEADER (Simple Numbers)
+            let headRow = "<tr><th>EMPLOYEE NAME</th>";
+            dates.forEach(d => headRow += "<th>" + d.getDate() + "</th>");
+            headRow += "</tr>";
+            document.getElementById("tableHead").innerHTML = headRow;
+
+            // DATA FETCH
+            const [usersSnap, attSnap, manSnap] = await Promise.all([
+                db.collection("users").where("role", "!=", "admin").get(),
+                db.collection("attendance_2025").where("timestamp", ">=", new Date(startVal)).where("timestamp", "<=", new Date(new Date(endVal).setHours(23,59,59))).get(),
+                db.collection("attendance_manual").get()
+            ]);
+
+            // PROCESS DATA
+            let attMap = {};
+            attSnap.forEach(doc => {
+                const d = doc.data();
+                const key = d.email + "_" + new Date(d.timestamp.seconds*1000).toDateString();
+                if(!attMap[key]) attMap[key] = { in: null, out: null };
                 
-                for(let d=1; d<=daysInM; d++) {
-                    const colDate = new Date(y, m, d);
-                    colDate.setHours(0,0,0,0);
-                    const dateStr = y + "-" + String(m+1).padStart(2,'0') + "-" + String(d).padStart(2,'0');
-                    const manualId = user.email + "_" + dateStr;
-                    const clickAct = "openEdit('" + user.email + "', '" + user.name.replace(/'/g, "\\'") + "', '" + dateStr + "')";
+                const timeStr = new Date(d.timestamp.seconds*1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                if(d.type === 'IN') {
+                    if(!attMap[key].in || d.timestamp.seconds < attMap[key].in.seconds) attMap[key].in = { time: timeStr, obj: d.timestamp };
+                } else {
+                    if(!attMap[key].out || d.timestamp.seconds > attMap[key].out.seconds) attMap[key].out = { time: timeStr };
+                }
+            });
 
-                    // 1. Manual
+            manualData = {};
+            manSnap.forEach(doc => manualData[doc.id] = doc.data().status);
+
+            // BUILD ROWS
+            let rowsHtml = "";
+            usersSnap.forEach(uDoc => {
+                const u = uDoc.data();
+                const shifts = u.shiftTimings || {};
+                let row = "<tr><td>" + (u.fullName || uDoc.id) + "</td>";
+
+                dates.forEach(d => {
+                    const dateKey = uDoc.id + "_" + d.toDateString();
+                    const isoDate = d.toISOString().split('T')[0];
+                    const manualId = uDoc.id + "_" + isoDate;
+                    const clickAction = "openEdit('" + uDoc.id + "', '" + (u.fullName || '').replace(/'/g, "\\'") + "', '" + isoDate + "')";
+
+                    let cellHtml = "";
+                    let cellClass = "";
+
+                    // 1. Manual Override
                     if(manualData[manualId]) {
                         const s = manualData[manualId];
-                        bHtml += "<td class='cell-clickable " + s + "' onclick=\"" + clickAct + "\">" + s + "<div class='manual-dot'></div></td>";
-                        continue;
+                        cellClass = s; 
+                        
+                        if(s === 'P') {
+                            cellHtml = "<div class='cell-box'><span class='time-row'>Manual</span></div>";
+                        } else {
+                            cellHtml = "<div class='cell-box'><span class='big-letter'>" + s + "</span></div>";
+                        }
+                    } 
+                    // 2. Auto Logic
+                    else {
+                        const dayName = d.toLocaleDateString('en-US', {weekday: 'short'});
+                        const shiftStart = shifts[dayName] || "09:30";
+                        const isOff = (shiftStart === "OFF" || dayName === "Sun");
+
+                        if(isOff) {
+                            cellClass = "WO";
+                            cellHtml = "<div class='cell-box'><span class='big-letter'>WO</span></div>";
+                        } else if(d > new Date()) {
+                            cellHtml = "<div class='cell-box'><span class='Future'>-</span></div>";
+                        } else {
+                            const mapKey = uDoc.id + "_" + d.toDateString();
+                            const record = attMap[mapKey];
+
+                            if(record && record.in) {
+                                // PRESENT or LATE
+                                const inTime = record.in.time;
+                                let outTime = record.out ? record.out.time : "--:--";
+                                
+                                // Auto Clock Out Visual
+                                const todayZero = new Date(); todayZero.setHours(0,0,0,0);
+                                if (!record.out && d < todayZero) {
+                                    outTime = "06:00 PM <span class='auto-tag'></span>";
+                                }
+
+                                // Check Late
+                                const inDateObj = new Date(record.in.obj.seconds * 1000);
+                                const [sH, sM] = shiftStart.split(":").map(Number);
+                                let isLate = false;
+                                if(inDateObj.getHours() > sH || (inDateObj.getHours() === sH && inDateObj.getMinutes() > sM)) isLate = true;
+
+                                cellClass = isLate ? "L" : "P";
+                                let label = isLate ? "<div class='late-label'>LATE</div>" : "";
+                                
+                                cellHtml = "<div class='cell-box'>" + label + 
+                                           "<div class='time-row'>IN: " + inTime + "</div>" +
+                                           "<div class='time-row'>OUT: " + outTime + "</div></div>";
+                            } else {
+                                // ABSENT
+                                cellClass = "A";
+                                cellHtml = "<div class='cell-box'><span class='big-letter'>A</span></div>";
+                            }
+                        }
                     }
-
-                    // 2. Future
-                    if(colDate > today) {
-                        bHtml += "<td class='Future'>-</td>";
-                        continue;
-                    }
-
-                    // 3. Auto
-                    const dayName = daysMap[colDate.getDay()];
-                    let reqTime = user.shifts[dayName] || "09:30";
-                    if(dayName === "Sun" && !user.shifts[dayName]) reqTime = "OFF";
-
-                    if(reqTime === "OFF") {
-                        bHtml += "<td class='cell-clickable WO' onclick=\"" + clickAct + "\">WO</td>";
-                        continue;
-                    }
-
-                    const records = autoData.filter(a => {
-                        const rd = new Date(a.timestamp.seconds * 1000);
-                        return a.email === user.email && rd.getDate() === d;
-                    });
-                    const inRec = records.find(r => r.type === 'IN');
-                    const outRec = records.find(r => r.type === 'OUT');
-
-                    if(inRec) {
-                        const inT = new Date(inRec.timestamp.seconds * 1000);
-                        const outT = outRec ? new Date(outRec.timestamp.seconds * 1000) : null;
-                        const timeOpts = {hour:'2-digit', minute:'2-digit', hour12:true};
-                        const inStr = inT.toLocaleTimeString([], timeOpts);
-                        const outStr = outT ? outT.toLocaleTimeString([], timeOpts) : "--:--";
-
-                        const [rH, rM] = reqTime.split(":").map(Number);
-                        const isLate = (inT.getHours() > rH) || (inT.getHours() === rH && inT.getMinutes() > rM);
-                        const cellClass = isLate ? 'L' : 'P';
-                        const badge = isLate ? "<span class='late-badge'>LATE</span>" : "";
-
-                        bHtml += "<td class='cell-clickable " + cellClass + "' onclick=\"" + clickAct + "\">" +
-                                 "<div class='time-box'>" + badge + 
-                                 "<div class='time-row'>IN: " + inStr + "</div>" +
-                                 "<div class='time-row'>OUT: " + outStr + "</div>" +
-                                 "</div></td>";
-                    } else {
-                        bHtml += "<td class='cell-clickable A' onclick=\"" + clickAct + "\">A</td>";
-                    }
-                }
-                bHtml += "</tr>";
+                    
+                    row += "<td class='" + cellClass + "' onclick=\"" + clickAction + "\">" + cellHtml + "</td>";
+                });
+                row += "</tr>";
+                rowsHtml += row;
             });
-            tBody.innerHTML = bHtml;
+
+            document.getElementById("tableBody").innerHTML = rowsHtml;
+            document.getElementById("loadingOverlay").style.display = "none";
         }
 
-        // MODAL
+        function getDates(startDate, stopDate) {
+            var dateArray = [];
+            var currentDate = startDate;
+            while (currentDate <= stopDate) {
+                dateArray.push(new Date (currentDate));
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+            return dateArray;
+        }
+
+        // --- MODAL & ACTIONS ---
         function openEdit(email, name, dateStr) {
             document.getElementById("modalEmpName").value = name;
             document.getElementById("modalEmpEmail").value = email;
@@ -427,7 +426,6 @@
             document.getElementById("modalDateValue").value = dateStr;
             document.getElementById("editModal").style.display = "flex";
         }
-
         function closeModal() { document.getElementById("editModal").style.display = "none"; }
 
         function saveManual() {
@@ -439,37 +437,23 @@
             db.collection("attendance_manual").doc(docId).set({
                 email, dateString: dateStr, status,
                 updatedBy: auth.currentUser.email, timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            }).then(() => {
-                manualData[docId] = status;
-                refreshView();
-            });
+            }).then(() => { generateReport(); closeModal(); });
         }
 
         function resetManual() {
-            if(!confirm("Reset to auto calculation?")) return;
+            if(!confirm("Reset to auto?")) return;
             const email = document.getElementById("modalEmpEmail").value;
             const dateStr = document.getElementById("modalDateValue").value;
             const docId = email + "_" + dateStr;
-            
-            db.collection("attendance_manual").doc(docId).delete().then(() => {
-                delete manualData[docId];
-                refreshView();
-            });
-        }
-
-        function refreshView() {
-            const m = parseInt(monthSel.value);
-            const y = parseInt(document.getElementById("yearSelect").value);
-            renderTable(m, y);
-            closeModal();
+            db.collection("attendance_manual").doc(docId).delete().then(() => { generateReport(); closeModal(); });
         }
 
         function exportToExcel() {
-            const wb = XLSX.utils.table_to_book(document.getElementById("attendanceTable"), {sheet:"Sheet1"});
-            XLSX.writeFile(wb, "Attendance_Report.xlsx");
+            var wb = XLSX.utils.table_to_book(document.getElementById('reportTable'), {sheet:"Attendance"});
+            XLSX.writeFile(wb, 'Attendance_Report.xlsx');
         }
 
-        function logout() { auth.signOut().then(() => location.href = "index.html"); }
+        function logout() { auth.signOut().then(() => window.location.href="index.html"); }
         function toggleSidebar() { document.getElementById("sidebar").classList.toggle("active"); }
     </script>
 </body>
