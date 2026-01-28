@@ -226,28 +226,15 @@
             <img src="synod_logo.png" alt="Synod Logo" class="sidebar-logo">
             <div class="sidebar-brand">EMPLOYEE PORTAL</div>
         </div>
+        
         <ul class="nav-menu">
-            <li class="nav-item">
-                <a href="employee_dashboard.jsp"><span class="nav-icon">📊</span> Dashboard</a>
-            </li>
-            <li class="nav-item">
-                <a href="mark_attendance.jsp"><span class="nav-icon">📍</span> Mark Attendance</a>
-            </li>
-            <li class="nav-item">
-                <a href="employee_tasks.jsp" class="active"><span class="nav-icon">📝</span> Assigned Tasks</a>
-            </li>
-            <li class="nav-item">
-                <a href="attendance_history.jsp"><span class="nav-icon">🕒</span> History</a>
-            </li>
-            <li class="nav-item">
-                <a href="employee_expenses.jsp"><span class="nav-icon">💸</span> My Expenses</a>
-            </li>
-            <li class="nav-item">
-                <a href="salary.jsp"><span class="nav-icon">💰</span> My Salary</a>
-            </li>
-            <li class="nav-item">
-                <a href="settings.jsp"><span class="nav-icon">⚙️</span> Settings</a>
-            </li>
+            <li class="nav-item"><a href="manager_dashboard.jsp"><span class="nav-icon">📊</span> Overview</a></li>
+            <li class="nav-item"><a href="manager_mark_attendance.jsp"><span class="nav-icon">📍</span> My Attendance</a></li>
+            <li class="nav-item"><a href="manager_manage_employees.jsp" class="active"><span class="nav-icon">👥</span> Assign Tasks</a></li>
+            <li class="nav-item"><a href="manager_task_monitoring.jsp"><span class="nav-icon">📝</span> Task Monitoring</a></li>
+            <li class="nav-item"><a href="manager_report.jsp"><span class="nav-icon">📅</span> View Attendance</a></li>
+            <li class="nav-item"><a href="manager_list_of_employees.jsp"><span class="nav-icon">📋</span> Directory</a></li>
+            <li class="nav-item"><a href="manager_settings.jsp"><span class="nav-icon">⚙️</span> My Settings</a></li>
         </ul>
 
         <div class="sidebar-footer">

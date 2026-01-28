@@ -5,276 +5,435 @@
   response.setDateHeader("Expires", 0);
 %>
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Admin Dashboard - emPower</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Live Dashboard - Synod Bioscience</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-<script type="text/javascript">
-    function lockHistory() {
-        history.pushState(null, null, location.href);
-        history.pushState(null, null, location.href);
-        window.onpopstate = function () { history.go(1); };
+    <style>
+        /* --- 1. RESET & CORE VARS --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        :root { 
+            --primary-navy: #1a3b6e; 
+            --primary-dark: #122b52;
+            --primary-green: #2ecc71; 
+            --bg-light: #f0f2f5; 
+            --text-dark: #2c3e50;
+            --text-grey: #7f8c8d;
+            --sidebar-width: 280px; 
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --info: #3498db;
+            --card-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+        body { display: flex; height: 100vh; background-color: var(--bg-light); overflow: hidden; }
+
+        /* --- 2. SIDEBAR (Matching Manager Style) --- */
+        .sidebar { 
+            width: var(--sidebar-width); 
+            background: linear-gradient(180deg, var(--primary-navy) 0%, var(--primary-dark) 100%);
+            color: white; 
+            display: flex; flex-direction: column; flex-shrink: 0; 
+            box-shadow: 4px 0 20px rgba(0,0,0,0.1); z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        .sidebar-header { padding: 30px 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.1); }
+        .sidebar-logo { max-width: 130px; margin-bottom: 15px; filter: brightness(0) invert(1) drop-shadow(0 4px 6px rgba(0,0,0,0.2)); }
+        .sidebar-brand { font-size: 13px; font-weight: 600; letter-spacing: 1.5px; opacity: 0.9; text-transform: uppercase; }
+        
+        .nav-menu { list-style: none; padding: 20px 15px; flex: 1; overflow-y: auto; }
+        .nav-item { margin-bottom: 8px; }
+        .nav-item a { display: flex; align-items: center; padding: 14px 20px; color: #bdc3c7; text-decoration: none; font-size: 15px; font-weight: 500; border-radius: 10px; transition: all 0.2s ease; }
+        .nav-item a:hover { background: rgba(255,255,255,0.08); color: white; transform: translateX(5px); }
+        .nav-item a.active { background: var(--primary-green); color: white; box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4); }
+        .nav-icon { margin-right: 15px; font-size: 18px; width: 25px; text-align: center; }
+        
+        .sidebar-footer { padding: 25px; border-top: 1px solid rgba(255,255,255,0.05); }
+        .btn-logout { width: 100%; padding: 14px; background: rgba(231, 76, 60, 0.9); color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.2s; box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3); }
+        .btn-logout:hover { background: #c0392b; transform: translateY(-2px); }
+
+        /* --- 3. MAIN CONTENT --- */
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        .topbar { background: white; height: 70px; display: flex; justify-content: space-between; align-items: center; padding: 0 40px; box-shadow: 0 2px 15px rgba(0,0,0,0.03); z-index: 50; }
+        .page-title { font-size: 22px; font-weight: 700; color: var(--primary-navy); letter-spacing: -0.5px; }
+        
+        .user-profile { display: flex; align-items: center; gap: 15px; background: #f8f9fa; padding: 8px 15px; border-radius: 30px; border: 1px solid #e9ecef; }
+        .user-email { font-size: 13px; color: var(--text-dark); font-weight: 600; }
+        .user-avatar { width: 36px; height: 36px; background: var(--primary-navy); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; }
+
+        .content { padding: 30px 40px; height: 100%; display: flex; flex-direction: column; gap: 30px; overflow-y: auto; }
+
+        /* --- 4. STATS CARDS --- */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; margin-bottom: 10px; }
+        
+        .stat-card { background: white; padding: 25px; border-radius: 16px; box-shadow: var(--card-shadow); display: flex; align-items: center; justify-content: space-between; transition: transform 0.2s; border-left: 5px solid transparent; }
+        .stat-card:hover { transform: translateY(-5px); }
+        
+        .stat-info h3 { margin: 0; font-size: 13px; color: var(--text-grey); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-info .number { margin-top: 5px; font-size: 32px; font-weight: 800; color: var(--text-dark); }
+        .stat-icon { width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 28px; }
+        
+        .border-blue { border-left-color: var(--info); }
+        .border-blue .stat-icon { background: #e3f2fd; color: var(--info); }
+        
+        .border-green { border-left-color: var(--secondary); }
+        .border-green .stat-icon { background: #e8f5e9; color: var(--secondary); }
+        
+        .border-orange { border-left-color: var(--warning); }
+        .border-orange .stat-icon { background: #fff3cd; color: var(--warning); }
+
+        /* --- 5. TABLE CARD --- */
+        .table-card { background: white; border-radius: 16px; box-shadow: var(--card-shadow); padding: 30px; display: flex; flex-direction: column; flex: 1; overflow: hidden; border: 1px solid #f1f1f1; }
+        .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .table-header h3 { font-size: 18px; font-weight: 700; color: var(--primary-navy); margin: 0; }
+        
+        .live-badge { background: #ffebee; color: #c0392b; padding: 6px 15px; border-radius: 20px; font-size: 12px; font-weight: 800; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(231, 76, 60, 0.2); }
+        .live-dot { width: 8px; height: 8px; background: #c0392b; border-radius: 50%; animation: pulse 1.5s infinite; }
+        
+        @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.2); } 100% { opacity: 1; transform: scale(1); } }
+
+        /* Table */
+        .table-wrapper { flex: 1; overflow-y: auto; border-radius: 8px; border: 1px solid #f1f1f1; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        
+        th { background: #f8f9fa; position: sticky; top: 0; padding: 15px; text-align: left; font-size: 13px; font-weight: 600; color: var(--text-grey); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #eee; z-index: 10; }
+        td { padding: 15px; border-bottom: 1px solid #f8f9fa; font-size: 14px; color: var(--text-dark); vertical-align: middle; }
+        tr:hover td { background-color: #fcfcfc; }
+
+        /* Badges & Buttons */
+        .status-badge { padding: 6px 12px; border-radius: 30px; font-size: 12px; font-weight: 700; display: inline-block; }
+        .badge-in { background: #e8f5e9; color: #27ae60; }
+        .badge-out { background: #ffebee; color: #c0392b; }
+
+        .btn-view { background: white; color: var(--primary-navy); border: 1px solid var(--primary-navy); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.2s; }
+        .btn-view:hover { background: var(--primary-navy); color: white; }
+
+        /* --- 6. MODAL --- */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 25px; border-radius: 16px; max-width: 450px; width: 90%; text-align: center; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        .modal img { max-width: 100%; border-radius: 10px; margin-top: 15px; border: 4px solid #f1f1f1; }
+        .modal h4 { margin: 0; color: var(--primary-navy); font-size: 18px; }
+        .close-btn { position: absolute; top: 15px; right: 15px; background: #f1f1f1; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 18px; color: #666; transition: 0.2s; }
+        .close-btn:hover { background: #e74c3c; color: white; }
+
+        #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; color: var(--primary-navy); font-weight: 600; gap: 15px; }
+
+        @media (max-width: 1024px) {
+            .sidebar { position: fixed; left: -280px; height: 100%; }
+            .sidebar.active { transform: translateX(280px); }
+            .content { padding: 20px; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .toggle-btn { display: block; font-size: 24px; cursor: pointer; margin-right: 15px; }
+        }
+        @media (min-width: 1025px) { .toggle-btn { display: none; } }
+
+        /* Mobile Optimizations */
+
+@media (max-width: 768px) {
+
+    /* Hide Sidebar by default on mobile */
+
+    .sidebar {
+
+        display: none; 
+
+        position: fixed;
+
+        z-index: 1000;
+
+        width: 250px;
+
+        height: 100%;
+
     }
-    lockHistory();
-</script>
 
-<style>
-/* GLOBAL STYLES */
-body { margin:0; font-family:"Segoe UI", sans-serif; background:#f4f6f9; display:flex; height:100vh; }
 
-/* SIDEBAR (Dark Theme) */
-.sidebar { width:260px; background:#212529; color:#fff; display:flex; flex-direction:column; }
-.sidebar h2 { padding:20px; margin:0; background:#c0392b; text-align:center; font-size: 22px; }
-.sidebar a { display:block; padding:15px 20px; color:#adb5bd; text-decoration:none; border-left: 3px solid transparent; }
-.sidebar a:hover, .sidebar a.active { background:#343a40; color:#fff; border-left: 3px solid #e74c3c; }
 
-/* MAIN LAYOUT */
-.main { flex:1; display:flex; flex-direction:column; overflow-y: auto; }
-.header { height:60px; background:#fff; display:flex; justify-content:space-between; align-items:center; padding:0 30px; border-bottom: 1px solid #dee2e6; }
+    /* Make Content use full width */
 
-/* DASHBOARD CARDS */
-.cards-container { display: flex; gap: 20px; padding: 30px; }
-.stat-card { flex: 1; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-top: 4px solid #3498db; }
-.stat-card h3 { margin: 0 0 10px 0; color: #7f8c8d; font-size: 14px; text-transform: uppercase; }
-.stat-card .number { font-size: 32px; font-weight: bold; color: #2c3e50; }
+    .main-content {
 
-/* ATTENDANCE TABLE */
-.table-container { padding: 0 30px 30px 30px; }
-.admin-table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-radius: 8px; overflow: hidden; }
-.admin-table th { background: #34495e; color: white; padding: 15px; text-align: left; font-size: 14px; }
-.admin-table td { padding: 12px 15px; border-bottom: 1px solid #eee; color: #333; }
-.admin-table tr:hover { background: #f8f9fa; }
+        margin-left: 0 !important;
 
-/* BADGES */
-.status-badge { padding: 5px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; color: white; display: inline-block; }
-.badge-in { background: #27ae60; }
-.badge-out { background: #c0392b; }
+        width: 100%;
 
-/* PHOTO BUTTON & MODAL */
-.btn-view { background:#007bff; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:12px; }
-.btn-view:hover { background:#0056b3; }
+    }
 
-.modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); align-items: center; justify-content: center; }
-.modal-content { background-color: #fefefe; padding: 15px; border-radius: 5px; max-width: 90%; max-height: 90%; text-align: center; position: relative; }
-.modal img { max-width: 100%; max-height: 80vh; border-radius: 4px; border: 1px solid #ddd; margin-top:10px; }
-.close-btn { position: absolute; top: -15px; right: -15px; background: red; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-weight: bold; }
 
-#loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; font-size: 24px; color: #333; flex-direction: column; gap: 10px; }
-</style>
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    /* Show a Hamburger Menu Button (You need to add this button to your HTML) */
+
+    .mobile-menu-btn {
+
+        display: block !important; /* Visible only on mobile */
+
+        font-size: 24px;
+
+        background: none;
+
+        border: none;
+
+        color: white; /* or dark color depending on your header */
+
+        cursor: pointer;
+
+    }
+
+    
+
+    /* Adjust Grid/Cards for Mobile */
+
+    .card-container, .stats-row {
+
+        flex-direction: column; /* Stack items vertically */
+
+    }
+
+}
+
+.table-responsive, .attendance-grid-container {
+
+    display: block;
+
+    width: 100%;
+
+    overflow-x: auto; /* Allows horizontal scrolling */
+
+    -webkit-overflow-scrolling: touch; /* Smooth scroll on iPhones */
+
+}
+    </style>
 </head>
 <body>
 
-<div id="loadingOverlay">
-    <div>⌛ Loading Admin Panel...</div>
-    <div style="font-size:14px; color:#666;" id="loadingSubtext">Connecting...</div>
-</div>
-
-<div id="mainApp" style="display:none; width: 100%; height: 100%;">
-    
-    <div class="sidebar">
-      <h2>ADMIN PORTAL</h2>
-      <a class="active">📊 Dashboard</a>
-      <a href="manage_employees.jsp">👥 All Employees</a>
-      <a href="admin_task_monitoring.jsp">📝 Task Monitoring</a>
-      <a href="reports.jsp">📅 Attendance Reports</a>
-      <a href="payroll.jsp">💰 Payroll Management</a>
-      <a href="admin_expenses.jsp">💸 Expense Approvals</a>
-      <a href="admin_settings.jsp">⚙️ Settings</a>
-      <a href="#" onclick="logout()" style="margin-top:auto; background:#1a1d20;">🚪 Logout</a>
+    <div id="loadingOverlay">
+        <div style="font-size: 50px;">📊</div>
+        <div>Loading Live Data...</div>
     </div>
 
-    <div class="main">
-      <div class="header">
-        <h3 style="margin:0;">Dashboard Overview</h3>
-        <div style="font-weight:bold;">Welcome, Admin</div>
-      </div>
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="synod_logo.png" alt="Synod Logo" class="sidebar-logo">
+            <div class="sidebar-brand">ADMIN PORTAL</div>
+        </div>
 
-      <div class="cards-container">
-        <div class="stat-card">
-            <h3>Total Employees</h3>
-            <div class="number" id="totalEmp">0</div>
-        </div>
-        <div class="stat-card" style="border-top-color: #27ae60;">
-            <h3>Live Actions (Today)</h3>
-            <div class="number" id="presentToday">0</div>
-        </div>
-        <div class="stat-card" style="border-top-color: #e67e22;">
-            <h3>Pending Approvals</h3>
-            <div class="number" id="pendingCount">0</div>
-        </div>
-      </div>
+        <ul class="nav-menu">
+            <li class="nav-item"><a href="admin_homepage.html"><span class="nav-icon">🏠</span> Home</a></li>
+            <li class="nav-item"><a href="admin_dashboard.jsp" class="active"><span class="nav-icon">📊</span> Live Dashboard</a></li>
+            <li class="nav-item"><a href="manage_employees.jsp"><span class="nav-icon">👥</span> Employees</a></li>
+            <li class="nav-item"><a href="list_of_employees.jsp"><span class="nav-icon">📋</span> Directory</a></li>
+            <li class="nav-item"><a href="admin_task_monitoring.jsp"><span class="nav-icon">📝</span> Tasks</a></li>
+            <li class="nav-item"><a href="reports.jsp"><span class="nav-icon">📅</span> Attendance</a></li>
+            <li class="nav-item"><a href="admin_expenses.jsp"><span class="nav-icon">💸</span> Expenses</a></li>
+            <li class="nav-item"><a href="payroll.jsp"><span class="nav-icon">💰</span> Payroll</a></li>
+            <li class="nav-item"><a href="admin_settings.jsp"><span class="nav-icon">⚙️</span> Settings</a></li>
+        </ul>
 
-      <div class="table-container">
-        <h3>🔴 Live Attendance Feed (Today)</h3>
-        <table class="admin-table">
-            <thead>
-                <tr>
-                    <th>Time</th>
-                    <th>Employee Email</th>
-                    <th>Action</th>
-                    <th>Project</th>
-                    <th>Location</th>
-                    <th>Photo</th> 
-                </tr>
-            </thead>
-            <tbody id="tableBody">
-                <tr><td colspan="6">Waiting for updates...</td></tr>
-            </tbody>
-        </table>
-      </div>
+        <div class="sidebar-footer">
+            <button onclick="logout()" class="btn-logout"><span>🚪</span> Sign Out</button>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <header class="topbar">
+            <div style="display:flex; align-items:center;">
+                <div class="toggle-btn" onclick="toggleSidebar()">☰</div>
+                <div class="page-title">Live Overview</div>
+            </div>
+            <div class="user-profile">
+                <span id="adminEmail" class="user-email">Loading...</span>
+                <div class="user-avatar">A</div>
+            </div>
+        </header>
+
+        <div class="content">
+            
+            <div class="stats-grid">
+                <div class="stat-card border-blue">
+                    <div class="stat-info">
+                        <h3>Total Employees</h3>
+                        <div class="number" id="totalEmp">0</div>
+                    </div>
+                    <div class="stat-icon">👥</div>
+                </div>
+
+                <div class="stat-card border-green">
+                    <div class="stat-info">
+                        <h3>Active Today</h3>
+                        <div class="number" id="presentToday">0</div>
+                    </div>
+                    <div class="stat-icon">⚡</div>
+                </div>
+
+                <div class="stat-card border-orange">
+                    <div class="stat-info">
+                        <h3>Pending Actions</h3>
+                        <div class="number" id="pendingCount">0</div>
+                    </div>
+                    <div class="stat-icon">⏳</div>
+                </div>
+            </div>
+
+            <div class="table-card">
+                <div class="table-header">
+                    <h3>Real-Time Attendance Feed</h3>
+                    <div class="live-badge"><div class="live-dot"></div> LIVE FEED</div>
+                </div>
+                
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Employee</th>
+                                <th>Status</th>
+                                <th>Project</th>
+                                <th>Location</th>
+                                <th>Photo</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <tr><td colspan="6" style="text-align:center; padding:30px; color:#999;">Waiting for updates...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
     </div>
-</div>
 
-<div id="photoModal" class="modal" onclick="closeModal()">
-    <div class="modal-content" onclick="event.stopPropagation()">
-        <button class="close-btn" onclick="closeModal()">X</button>
-        <h4 style="margin:0; color:#333;">Attendance Verification</h4>
-        <img id="modalImg" src="">
+    <div id="photoModal" class="modal" onclick="closeModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="close-btn" onclick="closeModal()">×</button>
+            <h4>Selfie Verification</h4>
+            <img id="modalImg" src="" alt="User Selfie">
+        </div>
     </div>
-</div>
 
-<script>
-// --- PASTE YOUR API KEY HERE ---
-const firebaseConfig = {
-  apiKey: "AIzaSyBzdM77WwTSkxvF0lsxf2WLNLhjuGyNvQQ",
-  authDomain: "attendancewebapp-ef02a.firebaseapp.com",
-  projectId: "attendancewebapp-ef02a",
-  storageBucket: "attendancewebapp-ef02a.firebasestorage.app",
-  messagingSenderId: "734213881030",
-  appId: "1:734213881030:web:bfdcee5a2ff293f87e6bc7"
-};
+    <script>
+        // --- 1. CONFIG ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBzdM77WwTSkxvF0lsxf2WLNLhjuGyNvQQ",
+            authDomain: "attendancewebapp-ef02a.firebaseapp.com",
+            projectId: "attendancewebapp-ef02a",
+            storageBucket: "attendancewebapp-ef02a.firebasestorage.app",
+            messagingSenderId: "734213881030",
+            appId: "1:734213881030:web:bfdcee5a2ff293f87e6bc7"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        let allRecords = [];
 
-if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
+        // --- 2. AUTH CHECK ---
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                db.collection("users").doc(user.email).get().then(doc => {
+                    if (doc.exists && doc.data().role === 'admin') {
+                        document.getElementById("adminEmail").innerText = user.email;
+                        document.getElementById("loadingOverlay").style.display = "none";
+                        loadDashboardData();
+                    } else {
+                        window.location.replace("index.html");
+                    }
+                });
+            } else {
+                window.location.replace("index.html");
+            }
+        });
 
-// Store records here so modal can access them
-let allRecords = [];
+        // --- 3. DATA LOADING ---
+        function loadDashboardData() {
+            // Employee Count
+            db.collection("users").where("role", "!=", "admin").get().then(snap => {
+                document.getElementById("totalEmp").innerText = snap.size;
+            });
 
-// 1. AUTH CHECK
-auth.onAuthStateChanged(user => {
-  if (user) {
-      // User is logged in, check role
-      db.collection("users").doc(user.email).get().then(doc => {
-          if(doc.exists && doc.data().role === 'admin') {
-              document.getElementById("loadingOverlay").style.display = "none";
-              document.getElementById("mainApp").style.display = "flex";
-              loadDashboardData();
-          } else {
-              alert("Access Denied: Admins Only");
-              logout();
-          }
-      }).catch(e => {
-          console.error("DB Error:", e);
-          // Allow access if DB error (likely empty DB) to let you bootstrap
-          document.getElementById("loadingOverlay").style.display = "none";
-          document.getElementById("mainApp").style.display = "flex";
-          loadDashboardData();
-      });
-  } else {
-      window.location.replace("login.jsp");
-  }
-});
+            // Pending Approvals
+            db.collection("users").where("status", "==", "Pending").get().then(snap => {
+                document.getElementById("pendingCount").innerText = snap.size;
+            });
 
-function loadDashboardData() {
-    // A. Get Total Employees Count
-    db.collection("users").where("role", "!=", "admin").get().then(snap => {
-        document.getElementById("totalEmp").innerText = snap.size;
-    });
+            // Live Feed
+            db.collection("attendance_2025")
+              .orderBy("timestamp", "desc")
+              .limit(15) 
+              .onSnapshot(snapshot => {
+                  let actionCount = 0;
+                  let html = "";
+                  allRecords = []; 
 
-    // B. Get Pending Count
-    db.collection("users").where("status", "==", "Pending").get().then(snap => {
-        document.getElementById("pendingCount").innerText = snap.size;
-    });
-
-    // C. Get Today's Live Attendance
-    // Note: Ensure your 'attendance_2025' collection exists or this will just be empty
-    db.collection("attendance_2025")
-      .orderBy("timestamp", "desc")
-      .limit(20) 
-      .onSnapshot(snapshot => {
-          let actionCount = 0;
-          let html = "";
-          
-          allRecords = []; // Reset local storage
-
-          if(snapshot.empty) {
-              document.getElementById("tableBody").innerHTML = "<tr><td colspan='6' style='text-align:center'>No attendance records found today.</td></tr>";
-              return;
-          }
-
-          snapshot.forEach(doc => {
-              const data = doc.data();
-              actionCount++;
-              
-              allRecords.push(data);
-              const index = allRecords.length - 1;
-              
-              // 1. TIME
-              let time = "N/A";
-              if (data.timestamp) {
-                  time = new Date(data.timestamp.seconds * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-              }
-              
-              // 2. BADGE
-              const type = data.type || "UNKNOWN";
-              const badgeClass = (type === "IN") ? "badge-in" : "badge-out";
-
-              // 3. MAP LINK
-              let mapLink = "<span style='color:#ccc'>No Loc</span>";
-              if(data.location && data.location.lat) {
-                  mapLink = "<a href='https://www.google.com/maps/search/?api=1&query=" + data.location.lat + "," + data.location.lng + "' target='_blank' style='color:#3498db; text-decoration:none;'>View Map</a>";
-              }
-
-              // 4. PHOTO BUTTON
-              let photoBtn = "<span style='color:#ccc; font-size:12px'>No Photo</span>";
-              if (data.photo) {
-                  if(data.photo.startsWith("http") || data.photo.startsWith("data:image")) {
-                       photoBtn = "<button class='btn-view' onclick='openPhoto(" + index + ")'>View</button>";
+                  if(snapshot.empty) {
+                      document.getElementById("tableBody").innerHTML = "<tr><td colspan='6' style='text-align:center; padding:30px; color:#777;'>No attendance records found today.</td></tr>";
+                      return;
                   }
-              }
 
-              html += "<tr>";
-              html += "<td>" + time + "</td>";
-              html += "<td>" + (data.email || "Unknown") + "</td>";
-              html += "<td><span class='status-badge " + badgeClass + "'>" + type + "</span></td>";
-              html += "<td>" + (data.project || "General") + "</td>";
-              html += "<td>" + mapLink + "</td>";
-              html += "<td>" + photoBtn + "</td>";
-              html += "</tr>";
-          });
-          
-          document.getElementById("tableBody").innerHTML = html;
-          document.getElementById("presentToday").innerText = actionCount; 
-      });
-}
+                  snapshot.forEach(doc => {
+                      const data = doc.data();
+                      actionCount++;
+                      allRecords.push(data);
+                      const index = allRecords.length - 1;
+                      
+                      let time = data.timestamp ? new Date(data.timestamp.seconds * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : "N/A";
+                      const type = data.type || "UNKNOWN";
+                      const badgeClass = (type === "IN") ? "badge-in" : "badge-out";
+                      
+                      let mapLink = "<span style='color:#ccc'>No GPS</span>";
+                      if(data.location && data.location.lat) {
+                          // Fixed String Concatenation for map link
+                          mapLink = "<a href='https://www.google.com/maps?q=" + data.location.lat + "," + data.location.lng + "' target='_blank' style='color:#3498db; text-decoration:none; font-weight:700;'>📍 View Map</a>";
+                      }
 
-// MODAL FUNCTIONS
-function openPhoto(index) {
-    const data = allRecords[index];
-    const modal = document.getElementById("photoModal");
-    const img = document.getElementById("modalImg");
-    if(data && data.photo) {
-        img.src = data.photo;
-        modal.style.display = "flex";
-    }
-}
+                      let photoBtn = "<span style='color:#ccc; font-size:12px'>No Pic</span>";
+                      if (data.photo) {
+                           // Fixed String Concatenation for onclick
+                           photoBtn = "<button class='btn-view' onclick='openPhoto(" + index + ")'>📷 View</button>";
+                      }
 
-function closeModal() {
-    document.getElementById("photoModal").style.display = "none";
-}
+                      // Concatenating HTML string properly
+                      html += "<tr>";
+                      html += "<td><b>" + time + "</b></td>";
+                      html += "<td>" + (data.email || "Unknown") + "</td>";
+                      html += "<td><span class='status-badge " + badgeClass + "'>" + type + "</span></td>";
+                      html += "<td>" + (data.project || "General") + "</td>";
+                      html += "<td>" + mapLink + "</td>";
+                      html += "<td>" + photoBtn + "</td>";
+                      html += "</tr>";
+                  });
+                  
+                  document.getElementById("tableBody").innerHTML = html;
+                  document.getElementById("presentToday").innerText = actionCount; 
+              });
+        }
 
-function logout(){
-  auth.signOut().then(() => {
-    window.location.replace("login.jsp");
-  });
-}
-</script>
+        // --- 4. UTILS ---
+        function openPhoto(index) {
+            const data = allRecords[index];
+            const modal = document.getElementById("photoModal");
+            const img = document.getElementById("modalImg");
+            if(data && data.photo) {
+                img.src = data.photo;
+                modal.style.display = "flex";
+            }
+        }
 
+        function closeModal() {
+            document.getElementById("photoModal").style.display = "none";
+        }
+
+        function toggleSidebar() {
+            document.getElementById("sidebar").classList.toggle("active");
+        }
+
+        function logout(){
+            auth.signOut().then(() => window.location.href = "index.html");
+        }
+    </script>
 </body>
 </html>

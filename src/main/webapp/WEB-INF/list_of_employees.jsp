@@ -9,6 +9,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Employee Directory - Synod Bioscience</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -79,7 +80,6 @@
 
         /* Badges */
         .role-badge { padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; background: #e3f2fd; color: #1a3b6e; display: inline-block; }
-        .rfid-badge { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 800; font-family: monospace; background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
         .missing-data { color: #e74c3c; font-style: italic; font-size: 12px; }
 
         /* Action Button */
@@ -102,7 +102,6 @@
         label { display: block; font-size: 12px; font-weight: 700; color: var(--text-dark); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
         input, select { width: 100%; padding: 12px 15px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 14px; background: #f9f9f9; transition: 0.2s; }
         input:focus, select:focus { border-color: var(--primary-navy); background: white; outline: none; box-shadow: 0 0 0 3px rgba(26, 59, 110, 0.1); }
-        .rfid-input-box { background: #f1f8e9; border: 1px solid #c8e6c9; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
         .readonly-field { background: #eee; cursor: not-allowed; color: #666; font-weight: 600; }
 
         .modal-actions { margin-top: 30px; display: flex; gap: 15px; }
@@ -122,6 +121,82 @@
             .content { padding: 20px; }
         }
         @media (min-width: 1025px) { .toggle-btn { display: none; } }
+
+        /* Mobile Optimizations */
+
+@media (max-width: 768px) {
+
+    /* Hide Sidebar by default on mobile */
+
+    .sidebar {
+
+        display: none; 
+
+        position: fixed;
+
+        z-index: 1000;
+
+        width: 250px;
+
+        height: 100%;
+
+    }
+
+
+
+    /* Make Content use full width */
+
+    .main-content {
+
+        margin-left: 0 !important;
+
+        width: 100%;
+
+    }
+
+
+
+    /* Show a Hamburger Menu Button (You need to add this button to your HTML) */
+
+    .mobile-menu-btn {
+
+        display: block !important; /* Visible only on mobile */
+
+        font-size: 24px;
+
+        background: none;
+
+        border: none;
+
+        color: white; /* or dark color depending on your header */
+
+        cursor: pointer;
+
+    }
+
+    
+
+    /* Adjust Grid/Cards for Mobile */
+
+    .card-container, .stats-row {
+
+        flex-direction: column; /* Stack items vertically */
+
+    }
+
+}
+
+.table-responsive, .attendance-grid-container {
+
+    display: block;
+
+    width: 100%;
+
+    overflow-x: auto; /* Allows horizontal scrolling */
+
+    -webkit-overflow-scrolling: touch; /* Smooth scroll on iPhones */
+
+}
     </style>
 </head>
 <body>
@@ -177,7 +252,7 @@
                             <tr>
                                 <th>Name / Email</th>
                                 <th>Position (Access)</th>
-                                <th>RFID UID</th>
+                                <th>Job Role</th>
                                 <th>Phone</th>
                                 <th>Current Project</th>
                                 <th>Action</th>
@@ -208,11 +283,6 @@
                     <label>Employee ID</label>
                     <input type="text" id="editEmpId" placeholder="e.g. EMP001">
                 </div>
-            </div>
-
-            <div class="rfid-input-box">
-                <label style="color:#2e7d32;">🆔 RFID Card UID</label>
-                <input type="text" id="editRfid" placeholder="Scan or enter UID (e.g. BDD58D02)" style="font-family:monospace; font-weight:700; letter-spacing:1px; text-transform:uppercase; border-color:#a5d6a7;">
             </div>
 
             <div class="row">
@@ -314,24 +384,28 @@
 
                 snap.forEach(doc => {
                     const d = doc.data();
+                    // Identify user by Email field (default) or Doc ID if missing
                     const emailKey = d.email || doc.id; 
+                    
+                    // Store data locally using this key
                     loadedUsers[emailKey] = d;
 
                     if(d.role !== 'admin') {
+                        // Display Logic
                         let fullName = checkVal(d.fullName, "Unknown Name");
                         let position = (d.role || "employee").toUpperCase();
                         let jobRole = checkVal(d.designation, "-");
-                        let phone = checkVal(d.contact || d.phone, "-");
+                        let phone = checkVal(d.contact || d.phone, "-"); // Check both possible phone fields
                         let project = checkVal(d.currentProject, "-");
-                        let rfid = d.rfid_uid ? "<span class='rfid-badge'>" + d.rfid_uid + "</span>" : "<span style='color:#ccc; font-size:11px;'>Not Set</span>";
 
+                        // Add visual cue for missing data
                         const roleStyle = jobRole === "-" ? "class='missing-data'" : "";
                         const projectStyle = project === "-" ? "class='missing-data'" : "";
 
+                        // STRING CONCATENATION (FIXED FOR JSP)
                         html += "<tr>";
                         html += "<td><strong>" + fullName + "</strong><br><span style='font-size:11px; color:#777;'>" + emailKey + "</span></td>";
                         html += "<td><span class='role-badge'>" + position + "</span></td>";
-                        html += "<td>" + rfid + "</td>";
                         html += "<td " + roleStyle + ">" + jobRole + "</td>";
                         html += "<td>" + phone + "</td>";
                         html += "<td " + projectStyle + ">" + project + "</td>";
@@ -345,19 +419,22 @@
 
         // --- 5. MODAL LOGIC ---
         function openEditModal(emailKey) {
+            console.log("Opening edit for:", emailKey);
             const d = loadedUsers[emailKey];
+            
             if (!d) {
                 alert("Error: User data missing locally. Please refresh.");
                 return;
             }
 
+            // Populate Fields - Use empty string if missing so input isn't literally "null"
             document.getElementById("editEmail").value = emailKey;
             document.getElementById("editName").value = checkVal(d.fullName, "") === "Not Set" ? "" : d.fullName;
-            document.getElementById("editRfid").value = d.rfid_uid || "";
             document.getElementById("editEmpId").value = checkVal(d.empId, "") === "Not Set" ? "" : d.empId;
             document.getElementById("editPosition").value = d.role || "employee";
             document.getElementById("editRole").value = checkVal(d.designation, "") === "Not Set" ? "" : d.designation;
             
+            // Check both contact fields
             let ph = d.contact || d.phone;
             document.getElementById("editPhone").value = checkVal(ph, "") === "Not Set" ? "" : ph;
             
@@ -377,18 +454,18 @@
             
             const updates = {
                 fullName: document.getElementById("editName").value,
-                rfid_uid: document.getElementById("editRfid").value.toUpperCase().trim(),
                 empId: document.getElementById("editEmpId").value,
                 role: document.getElementById("editPosition").value,
                 designation: document.getElementById("editRole").value,
                 contact: document.getElementById("editPhone").value,
-                phone: document.getElementById("editPhone").value,
+                phone: document.getElementById("editPhone").value, // Save to both fields just in case
                 currentProject: document.getElementById("editProject").value
             };
 
             btn.innerText = "Saving...";
             btn.disabled = true;
 
+            // Update in Firebase using Set with Merge (safer than update if doc doesn't exist)
             db.collection("users").doc(email).set(updates, { merge: true }).then(() => {
                 alert("✅ Profile Updated Successfully!");
                 closeModal();

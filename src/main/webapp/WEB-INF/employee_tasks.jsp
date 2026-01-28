@@ -4,119 +4,404 @@
   response.setHeader("Pragma", "no-cache");
   response.setDateHeader("Expires", 0);
 %>
-<%@ page isELIgnored="true" %>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>My Tasks - emPower</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>My Tasks - Employee Portal</title>
+    
     <style>
-        /* --- GLOBAL STYLES --- */
-        body { margin:0; font-family:"Segoe UI", sans-serif; background:#f4f6f9; display:flex; height:100vh; color: #333; }
+        /* --- 1. RESET & VARS --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         
-        /* SIDEBAR */
-        .sidebar { width:260px; background:#343a40; color:#fff; display:flex; flex-direction:column; }
-        .sidebar h2 { padding:20px; margin:0; background:#212529; text-align:center; }
-        .sidebar a { display:block; padding:15px 20px; color:#c2c7d0; text-decoration:none; }
-        .sidebar a:hover, .sidebar a.active { background:#495057; color:#fff; border-left: 3px solid #007bff; }
-        @media (max-width: 768px) { .sidebar { display:none; } }
+        :root {
+            --primary-navy: #1a3b6e;
+            --primary-dark: #122b52;
+            --primary-green: #2ecc71;
+            --bg-light: #f0f2f5;
+            --text-dark: #2c3e50;
+            --text-grey: #7f8c8d;
+            --card-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            --sidebar-width: 280px;
+        }
 
-        /* MAIN CONTENT */
-        .main { flex:1; display:flex; flex-direction:column; overflow: hidden; }
-        .header { height:60px; background:#fff; display:flex; align-items:center; padding:0 20px; border-bottom: 1px solid #dee2e6; justify-content: space-between; }
-        .content { flex:1; padding:20px; overflow-y:auto; }
+        body { display: flex; height: 100vh; background-color: var(--bg-light); overflow: hidden; }
 
-        /* TABS */
-        .tab-container { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #ddd; padding-bottom: 10px; }
-        .tab-btn { padding: 10px 20px; border: none; background: #e9ecef; color: #555; cursor: pointer; border-radius: 5px; font-weight: bold; font-size: 14px; }
-        .tab-btn.active { background: #007bff; color: white; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        /* --- 2. SIDEBAR --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--primary-navy) 0%, var(--primary-dark) 100%);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+            z-index: 1000;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.1);
+        }
 
-        /* CARDS & LAYOUT */
-        .card { background:white; padding:20px; border-radius:8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px;}
-        .flex-row { display: flex; gap: 20px; flex-wrap: wrap; }
-        .half-width { flex: 1; min-width: 300px; }
+        .sidebar-header {
+            padding: 30px 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            background: rgba(0,0,0,0.1);
+        }
 
-        /* TABLE STYLES */
-        table { width:100%; border-collapse:collapse; background:#fff; margin-top: 15px; }
-        th, td { padding:15px; text-align:left; border-bottom:1px solid #dee2e6; vertical-align: middle; }
-        th { background:#343a40; color:#fff; font-weight:600; }
-        tr:hover { background-color: #f8f9fa; }
-
-        /* BADGES */
-        .badge { padding: 5px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; color: white; display: inline-block; }
-        .bg-HIGH { background-color: #dc3545; }
-        .bg-MEDIUM { background-color: #ffc107; color: #333; }
-        .bg-LOW { background-color: #28a745; }
-
-        /* STATUS SELECT */
-        .status-select { padding: 8px; border-radius: 4px; border: 1px solid #ccc; font-weight: bold; cursor: pointer; }
-        .PENDING { color: #dc3545; border-color: #dc3545; }
-        .IN_PROGRESS { color: #e0a800; border-color: #e0a800; }
-        .DONE { color: #28a745; border-color: #28a745; }
-
-        /* BUTTONS */
-        .btn-open { background:#007bff; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer; font-size:13px; font-weight:bold; }
-        .btn-open:hover { background:#0056b3; }
-
-        /* --- PROJECT CHAT STYLES --- */
-        .chat-box { border: 1px solid #ddd; height: 350px; overflow-y: auto; background: #f9f9f9; padding: 15px; border-radius: 4px; margin-top: 10px; display: flex; flex-direction: column; gap: 10px; }
-        .chat-msg { padding: 8px 12px; border-radius: 15px; max-width: 80%; font-size: 13px; line-height: 1.4; }
-        .msg-mine { background: #dcf8c6; align-self: flex-end; border-bottom-right-radius: 0; }
-        .msg-other { background: #e9ecef; align-self: flex-start; border-bottom-left-radius: 0; }
+        .sidebar-logo {
+            max-width: 130px;
+            height: auto;
+            margin-bottom: 15px;
+            filter: brightness(0) invert(1) drop-shadow(0 4px 6px rgba(0,0,0,0.2));
+        }
         
-        .chat-input-row { display:flex; gap:10px; margin-top:10px; }
-        .proj-input { flex:1; padding:10px; border:1px solid #ccc; border-radius:4px; }
-        .btn-send-proj { background:#007bff; color:white; border:none; padding:0 20px; border-radius:4px; cursor:pointer; }
+        .sidebar-brand { 
+            font-size: 13px; 
+            opacity: 0.9; 
+            letter-spacing: 1.5px; 
+            text-transform: uppercase; 
+            font-weight: 600;
+        }
 
-        /* --- MODAL (TASK DETAIL) --- */
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center; }
-        .modal-content { background-color: #fff; width: 600px; max-width: 90%; height: 80vh; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        .modal-header { background: #343a40; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
-        .modal-body { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
-        .task-info-box { background: #f8f9fa; padding: 15px; border-radius: 5px; border: 1px solid #e9ecef; }
+        .nav-menu {
+            list-style: none;
+            padding: 20px 15px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .nav-item { margin-bottom: 8px; }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            padding: 14px 20px;
+            color: #bdc3c7;
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 500;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item a:hover {
+            background-color: rgba(255,255,255,0.08);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .nav-item a.active {
+            background-color: var(--primary-green);
+            color: white;
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4);
+        }
+
+        .nav-icon { margin-right: 15px; font-size: 18px; width: 25px; text-align: center; }
+
+        .sidebar-footer { padding: 25px; border-top: 1px solid rgba(255,255,255,0.05); }
+        .btn-logout {
+            width: 100%;
+            padding: 14px;
+            background-color: rgba(231, 76, 60, 0.9);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3);
+        }
+        .btn-logout:hover { background-color: #c0392b; transform: translateY(-2px); }
+
+        /* --- 3. MAIN CONTENT --- */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            position: relative;
+        }
         
-        /* Modal Chat */
-        .chat-container { border: 1px solid #ddd; border-radius: 5px; flex: 1; display: flex; flex-direction: column; background: #fff; }
-        .chat-messages { flex: 1; padding: 15px; overflow-y: auto; background: #fdfdfd; display: flex; flex-direction: column; gap: 10px; }
-        .msg-bubble { padding: 8px 12px; border-radius: 15px; max-width: 80%; font-size: 13px; line-height: 1.4; position: relative; }
-        .msg-meta { font-size: 10px; color: #777; margin-top: 4px; display: block; text-align: right; }
-        .chat-input-area { padding: 10px; border-top: 1px solid #ddd; display: flex; gap: 10px; background: #eee; }
-        .chat-input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 20px; outline: none; }
-        .btn-send { background: #28a745; color: white; border: none; padding: 0 20px; border-radius: 20px; cursor: pointer; font-weight: bold; }
-        .close-btn { background: none; border: none; color: white; font-size: 20px; cursor: pointer; }
+        .topbar {
+            background: white;
+            height: 70px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 40px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.03);
+            position: sticky; top: 0; z-index: 100;
+        }
         
-        /* Select Dropdown styling for projects */
-        select { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; }
+        .page-title { 
+            font-size: 22px; 
+            font-weight: 700; 
+            color: var(--primary-navy); 
+            letter-spacing: -0.5px;
+        }
+
+        .user-profile { 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            background: #f8f9fa;
+            padding: 8px 15px;
+            border-radius: 30px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .user-email { font-size: 13px; color: var(--text-dark); font-weight: 600; }
+        .user-avatar { 
+            width: 36px; height: 36px; 
+            background: var(--primary-navy); 
+            color: white;
+            border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; 
+            font-weight: bold; font-size: 14px;
+        }
+
+        /* --- 4. PAGE CONTENT --- */
+        .content { padding: 40px; max-width: 1400px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 30px; }
+
+        /* Tabs */
+        .tab-container { display: flex; gap: 15px; border-bottom: 2px solid #e9ecef; padding-bottom: 15px; }
+        
+        .tab-btn { 
+            padding: 12px 30px; border: none; background: transparent; 
+            color: var(--text-grey); cursor: pointer; border-radius: 30px; 
+            font-weight: 600; font-size: 14px; transition: all 0.3s ease;
+        }
+        .tab-btn:hover { background: #e9ecef; color: var(--primary-navy); }
+        .tab-btn.active { background: var(--primary-navy); color: white; box-shadow: 0 4px 10px rgba(26, 59, 110, 0.2); }
+        
+        .tab-pane { display: none; width: 100%; }
+        .tab-pane.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Cards */
+        .card { 
+            background: white; padding: 30px; border-radius: 16px; 
+            box-shadow: var(--card-shadow); border-top: 4px solid var(--primary-navy);
+        }
+
+        /* Table */
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 600px; }
+        
+        th { 
+            background: #f8f9fa; color: var(--text-grey); padding: 15px; 
+            text-align: left; font-size: 12px; text-transform: uppercase; 
+            border-bottom: 2px solid #eee; font-weight: 700; letter-spacing: 0.5px;
+        }
+        
+        td { 
+            padding: 15px; border-bottom: 1px solid #f1f1f1; 
+            color: var(--text-dark); font-size: 14px; vertical-align: middle; 
+        }
+        tr:hover td { background: #fcfcfc; }
+
+        /* Badges */
+        .badge { padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; color: white; display: inline-block; }
+        .bg-HIGH { background-color: #e74c3c; }
+        .bg-MEDIUM { background-color: #f39c12; }
+        .bg-LOW { background-color: #2ecc71; }
+
+        /* Status Select */
+        .status-select { 
+            padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; 
+            border: 1px solid transparent; cursor: pointer; outline: none; transition: 0.2s;
+        }
+        .status-select.PENDING { background: #fff0f0; color: #c0392b; border-color: #ffcccc; }
+        .status-select.IN_PROGRESS { background: #fff8e1; color: #d35400; border-color: #ffe0b2; }
+        .status-select.DONE { background: #e8f5e9; color: #27ae60; border-color: #c8e6c9; }
+
+        .btn-action { 
+            background: var(--primary-navy); color: white; border: none; 
+            padding: 8px 16px; border-radius: 6px; font-size: 12px; 
+            cursor: pointer; font-weight: 600; transition: all 0.2s;
+        }
+        .btn-action:hover { background: #132c52; transform: translateY(-2px); }
+
+        /* --- CHAT LAYOUT --- */
+        .chat-layout { display: flex; gap: 20px; height: 500px; }
+        .chat-sidebar { width: 280px; border-right: 1px solid #eee; display: flex; flex-direction: column; gap: 15px; padding-right: 20px; }
+        .chat-main { flex: 1; display: flex; flex-direction: column; background: #fcfcfc; border-radius: 12px; border: 1px solid #e0e0e0; overflow: hidden; }
+        
+        .chat-header { padding: 15px 20px; background: white; border-bottom: 1px solid #eee; font-weight: 700; color: var(--primary-navy); font-size: 15px; }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+        
+        .msg-bubble { max-width: 75%; padding: 12px 16px; border-radius: 16px; font-size: 14px; line-height: 1.5; position: relative; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .msg-mine { align-self: flex-end; background: #dcf8c6; color: var(--text-dark); border-bottom-right-radius: 2px; }
+        .msg-other { align-self: flex-start; background: white; color: var(--text-dark); border-bottom-left-radius: 2px; }
+        .msg-sender { font-size: 11px; font-weight: 700; color: var(--primary-navy); display: block; margin-bottom: 4px; }
+
+        .chat-input-area { padding: 15px; background: white; border-top: 1px solid #eee; display: flex; gap: 12px; }
+        .chat-input { flex: 1; padding: 12px 15px; border: 1px solid #ddd; border-radius: 25px; outline: none; transition: 0.3s; font-size: 14px; }
+        .chat-input:focus { border-color: var(--primary-navy); }
+        .btn-send { background: var(--primary-green); color: white; border: none; width: 42px; height: 42px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; transition: 0.2s; }
+        .btn-send:hover { transform: scale(1.1); }
+
+        /* --- MODAL --- */
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .modal-content { background-color: white; width: 600px; max-width: 90%; height: 85vh; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.2); }
+        .modal-header { padding: 20px 25px; background: var(--primary-navy); color: white; display: flex; justify-content: space-between; align-items: center; }
+        .modal-title { font-size: 18px; font-weight: 700; }
+        .close-btn { background: none; border: none; color: white; font-size: 24px; cursor: pointer; opacity: 0.8; }
+        .close-btn:hover { opacity: 1; }
+
+        .task-details { padding: 20px 25px; background: #f8f9fa; border-bottom: 1px solid #eee; }
+        .task-details h3 { margin: 0 0 8px 0; color: var(--primary-navy); font-size: 18px; font-weight: 700; }
+        .task-meta { font-size: 13px; color: var(--text-grey); display: flex; gap: 20px; font-weight: 500; }
+        
+        #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); backdrop-filter: blur(5px); z-index: 9999; display: flex; justify-content: center; align-items: center; font-size: 24px; color: var(--primary-navy); flex-direction: column; gap: 15px; font-weight: 600; }
+
+        @media (max-width: 900px) {
+            .sidebar { position: fixed; left: -280px; height: 100%; }
+            .sidebar.active { transform: translateX(280px); }
+            .toggle-btn { display: block; font-size: 24px; cursor: pointer; margin-right: 15px; }
+            .content { padding: 20px; }
+            .topbar { padding: 0 20px; }
+            .chat-layout { flex-direction: column; height: auto; }
+            .chat-sidebar { width: 100%; border-right: none; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+            .chat-main { height: 400px; }
+        }
+        /* Mobile Optimizations */
+
+@media (max-width: 768px) {
+
+    /* Hide Sidebar by default on mobile */
+
+    .sidebar {
+
+        display: none; 
+
+        position: fixed;
+
+        z-index: 1000;
+
+        width: 250px;
+
+        height: 100%;
+
+    }
+
+
+
+    /* Make Content use full width */
+
+    .main-content {
+
+        margin-left: 0 !important;
+
+        width: 100%;
+
+    }
+
+
+
+    /* Show a Hamburger Menu Button (You need to add this button to your HTML) */
+
+    .mobile-menu-btn {
+
+        display: block !important; /* Visible only on mobile */
+
+        font-size: 24px;
+
+        background: none;
+
+        border: none;
+
+        color: white; /* or dark color depending on your header */
+
+        cursor: pointer;
+
+    }
+
+    
+
+    /* Adjust Grid/Cards for Mobile */
+
+    .card-container, .stats-row {
+
+        flex-direction: column; /* Stack items vertically */
+
+    }
+
+}
+
+.table-responsive, .attendance-grid-container {
+
+    display: block;
+
+    width: 100%;
+
+    overflow-x: auto; /* Allows horizontal scrolling */
+
+    -webkit-overflow-scrolling: touch; /* Smooth scroll on iPhones */
+
+}
     </style>
 
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
-
 <body>
 
-    <div class="sidebar">
-      <h2>emPower</h2>
-      <a href="mark_attendance.jsp">📍 Mark Attendance</a>
-      <a href="employee_tasks.jsp" class="active">📝 Assigned Tasks</a>
-      <a href="attendance_history.jsp">🕒 Attendance History</a>
-      <a href="employee_expenses.jsp">💸 My Expenses</a>
-      <a href="salary.jsp">💰 My Salary</a>
-      <a href="settings.jsp">⚙️ Settings</a>
-      <a href="#" onclick="logout()">🚪 Logout</a>
+    <div id="loadingOverlay">
+        <div style="font-size: 50px;">📝</div>
+        <div>Loading Tasks...</div>
     </div>
 
-    <div class="main">
-        <div class="header">
-            <h3>My Workspace</h3>
-            <span id="userEmail">Loading...</span>
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="synod_logo.png" alt="Synod Logo" class="sidebar-logo">
+            <div class="sidebar-brand">EMPLOYEE PORTAL</div>
         </div>
+
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="employee_dashboard.jsp"><span class="nav-icon">📊</span> Dashboard</a>
+            </li>
+            <li class="nav-item">
+                <a href="mark_attendance.jsp"><span class="nav-icon">📍</span> Mark Attendance</a>
+            </li>
+            <li class="nav-item">
+                <a href="employee_tasks.jsp" class="active"><span class="nav-icon">📝</span> Assigned Tasks</a>
+            </li>
+            <li class="nav-item">
+                <a href="attendance_history.jsp"><span class="nav-icon">🕒</span> History</a>
+            </li>
+            <li class="nav-item">
+                <a href="employee_expenses.jsp"><span class="nav-icon">💸</span> My Expenses</a>
+            </li>
+            <li class="nav-item">
+                <a href="salary.jsp"><span class="nav-icon">💰</span> My Salary</a>
+            </li>
+            <li class="nav-item">
+                <a href="settings.jsp"><span class="nav-icon">⚙️</span> Settings</a>
+            </li>
+        </ul>
+
+        <div class="sidebar-footer">
+            <button onclick="logout()" class="btn-logout"><span>🚪</span> Sign Out</button>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <header class="topbar">
+            <div style="display:flex; align-items:center;">
+                <div class="toggle-btn" onclick="toggleSidebar()">☰</div>
+                <div class="page-title">Work & Projects</div>
+            </div>
+            <div class="user-profile">
+                <span id="userEmail" class="user-email">Loading...</span>
+                <div class="user-avatar">E</div>
+            </div>
+        </header>
 
         <div class="content">
             
@@ -125,67 +410,59 @@
                 <button class="tab-btn" onclick="switchTab('projects')">🚀 Project Groups</button>
             </div>
 
-            <div id="tab-tasks" class="tab-content active">
+            <div id="tab-tasks" class="tab-pane active">
                 <div class="card">
-                    <p style="color:#666; margin-top:0;">
-                        Click <b>"Open & Reply"</b> to view full details and update the admin.
+                    <p style="color:var(--text-grey); margin-top:0; font-size:14px; margin-bottom:25px;">
+                        Update task status or click <b>"View & Reply"</b> to discuss details with your manager.
                     </p>
                     
-                    <table>
-                        <thead>
-                            <tr>
-                                <th style="width: 35%;">Task</th>
-                                <th style="width: 15%;">Project</th>
-                                <th style="width: 10%;">Priority</th>
-                                <th style="width: 20%;">Status</th>
-                                <th style="width: 20%;">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="myTasksTable">
-                            <tr><td colspan="5" style="text-align:center; padding:20px;">⌛ Loading...</td></tr>
-                        </tbody>
-                    </table>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Task Title</th>
+                                    <th>Project</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="myTasksTable">
+                                <tr><td colspan="5" style="text-align:center; padding:30px; color:#999;">Loading tasks...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
-            <div id="tab-projects" class="tab-content">
-                <div class="flex-row">
-                    
-                    <div class="card half-width" style="flex: 0.4;">
-                        <h3>📂 Select Project</h3>
-                        <p style="color:#666; font-size:14px;">Select a project group you are a member of to start chatting.</p>
-                        
-                        <label><b>My Projects:</b></label>
-                        <select id="empProjectSelect" onchange="loadProjectChat()">
-                            <option value="">-- Choose a Project --</option>
-                        </select>
-                        
-                        <div id="projInfo" style="margin-top:20px; font-size:13px; color:#555; display:none;">
-                            ✅ You are a member of this project group.
+            <div id="tab-projects" class="tab-pane">
+                <div class="card">
+                    <div class="chat-layout">
+                        <div class="chat-sidebar">
+                            <h4 style="margin:0 0 10px 0; color:var(--primary-navy); font-size:15px;">📂 Select Project</h4>
+                            <select id="empProjectSelect" onchange="loadProjectChat()" style="width:100%; padding:12px; border-radius:8px; border:1px solid #e0e0e0; outline:none; font-size:14px;">
+                                <option value="">-- Choose a Project --</option>
+                            </select>
+                            <p style="font-size:13px; color:var(--text-grey); line-height:1.5;">
+                                Join the group discussion for projects you are assigned to.
+                            </p>
                         </div>
-                    </div>
 
-                    <div class="card half-width">
-                        <h3>💬 Project Group Chat</h3>
-                        
-                        <div id="projChatContainer" style="display:none;">
-                            <div style="font-size:12px; color:#666; margin-bottom:5px;">
-                                Connected to: <b id="chatProjName"></b>
+                        <div class="chat-main">
+                            <div class="chat-header">
+                                <span id="chatProjName">Select a project...</span>
                             </div>
                             
-                            <div id="projectChatBox" class="chat-box"></div>
+                            <div id="projectChatBox" class="chat-messages">
+                                <div style="text-align:center; color:#ccc; margin-top:80px;">👈 Select a project to start chatting</div>
+                            </div>
                             
-                            <div class="chat-input-row">
-                                <input type="text" id="projMsgInput" class="proj-input" placeholder="Type a message to the group...">
-                                <button class="btn-send-proj" onclick="sendProjectMsg()">Send</button>
+                            <div id="projInputArea" class="chat-input-area" style="display:none;">
+                                <input type="text" id="projMsgInput" class="chat-input" placeholder="Type a message...">
+                                <button class="btn-send" onclick="sendProjectMsg()">➤</button>
                             </div>
                         </div>
-
-                        <div id="noProjectMsg" style="text-align:center; color:#999; margin-top:80px;">
-                            👈 Select a project from the left menu.
-                        </div>
                     </div>
-
                 </div>
             </div>
 
@@ -195,111 +472,129 @@
     <div id="taskModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <span style="font-size:18px; font-weight:bold;">Task Discussion</span>
+                <span class="modal-title">Task Details</span>
                 <button class="close-btn" onclick="closeModal()">×</button>
             </div>
-            <div class="modal-body">
-                <div class="task-info-box">
-                    <h3 id="mTitle" style="margin:0 0 5px 0; color:#333;"></h3>
-                    <p id="mDesc" style="margin:0; color:#666; font-size:14px;"></p>
-                    <div style="margin-top:10px; font-size:12px; color:#888;">
-                        Due: <span id="mDate"></span> | Project: <span id="mProj"></span>
-                    </div>
-                    <div id="mPhotoBox" style="margin-top:10px; display:none;">
-                        <a id="mPhotoLink" href="#" target="_blank" style="color:#007bff; text-decoration:none;">📷 View Attached Reference Image</a>
-                    </div>
+            
+            <div class="task-details">
+                <h3 id="mTitle">Task Title</h3>
+                <p id="mDesc" style="color:var(--text-dark); font-size:14px; margin:8px 0; line-height:1.6;">Description...</p>
+                <div class="task-meta">
+                    <span id="mProj">Project: -</span>
+                    <span id="mDate">Due: -</span>
                 </div>
+                <div id="mPhotoBox" style="margin-top:12px; display:none;">
+                    <a id="mPhotoLink" href="#" target="_blank" style="color:var(--primary-navy); font-weight:600; font-size:13px; text-decoration:none; display:flex; align-items:center; gap:5px;">
+                        📎 View Attached Reference
+                    </a>
+                </div>
+            </div>
 
-                <div style="font-weight:bold; font-size:14px; margin-top:5px;">Replies & Updates:</div>
-                <div class="chat-container">
-                    <div id="chatMessages" class="chat-messages"></div>
-                    <div class="chat-input-area">
-                        <input type="text" id="chatInput" class="chat-input" placeholder="Type your update here...">
-                        <button class="btn-send" onclick="sendReply()">Send</button>
-                    </div>
-                </div>
+            <div class="chat-messages" id="chatMessages" style="background:#fff;">
+                <div style="text-align:center; padding:30px; color:#999;">Loading conversation...</div>
+            </div>
+
+            <div class="chat-input-area">
+                <input type="text" id="chatInput" class="chat-input" placeholder="Type a reply...">
+                <button class="btn-send" onclick="sendReply()">➤</button>
             </div>
         </div>
     </div>
 
     <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyBzdM77WwTSkxvF0lsxf2WLNLhjuGyNvQQ",
-  authDomain: "attendancewebapp-ef02a.firebaseapp.com",
-  projectId: "attendancewebapp-ef02a",
-  storageBucket: "attendancewebapp-ef02a.firebasestorage.app",
-  messagingSenderId: "734213881030",
-  appId: "1:734213881030:web:bfdcee5a2ff293f87e6bc7"
-};        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        // --- 1. CONFIG ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBzdM77WwTSkxvF0lsxf2WLNLhjuGyNvQQ",
+            authDomain: "attendancewebapp-ef02a.firebaseapp.com",
+            projectId: "attendancewebapp-ef02a",
+            storageBucket: "attendancewebapp-ef02a.firebasestorage.app",
+            messagingSenderId: "734213881030",
+            appId: "1:734213881030:web:bfdcee5a2ff293f87e6bc7"
+        };
+        
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
 
         let currentTaskId = null;
         let currentUserEmail = null;
-        let chatListener = null; // For Task Modal
-        let projChatListener = null; // For Project Tab
+        let chatListener = null; 
+        let projChatListener = null; 
         let currentProjectID = null;
 
+        // --- 2. AUTH & LOAD ---
         auth.onAuthStateChanged(user => {
             if(user) {
                 currentUserEmail = user.email;
                 document.getElementById("userEmail").innerText = user.email;
+                document.getElementById("loadingOverlay").style.display = "none";
                 loadMyTasks(user.email);
-                loadEmployeeProjects(user.email); // [NEW] Load Projects
+                loadEmployeeProjects(user.email);
             } else {
-                window.location.href = "login.jsp";
+                window.location.href = "index.html";
             }
         });
 
-        /* --- TABS LOGIC --- */
+        function toggleSidebar() {
+            document.getElementById("sidebar").classList.toggle("active");
+        }
+
         function switchTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             
             document.getElementById('tab-' + tabName).classList.add('active');
-            // Find button and active it
             const btns = document.querySelectorAll('.tab-btn');
             if(tabName === 'tasks') btns[0].classList.add('active');
             else btns[1].classList.add('active');
         }
 
-        /* --- TAB 1: TASKS LOGIC --- */
+        // --- 3. TASKS LOGIC ---
         function loadMyTasks(email) {
             const tbody = document.getElementById("myTasksTable");
-            // REMOVED .orderBy() to avoid index error
+            
             db.collection("tasks").where("assignedTo", "==", email).onSnapshot(snap => {
                 if(snap.empty) {
-                    tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:20px;'>No tasks assigned.</td></tr>";
+                    tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:40px; color:#999;'>🎉 No active tasks assigned to you.</td></tr>";
                     return;
                 }
+                
                 let rows = "";
                 snap.forEach(doc => {
                     const d = doc.data();
                     const id = doc.id; 
-                    const title = d.title || "Untitled";
-                    const project = d.project || "General";
-                    const priority = d.priority || "LOW";
-                    const sPending = d.status === 'PENDING' ? 'selected' : '';
-                    const sProg = d.status === 'IN_PROGRESS' ? 'selected' : '';
-                    const sDone = d.status === 'DONE' ? 'selected' : '';
                     const safeData = encodeURIComponent(JSON.stringify(d));
 
-                    // Use string concatenation for row building
+                    const sP = d.status === 'PENDING' ? 'selected' : '';
+                    const sI = d.status === 'IN_PROGRESS' ? 'selected' : '';
+                    const sD = d.status === 'DONE' ? 'selected' : '';
+
                     rows += "<tr>";
-                    rows += "<td><div style='font-weight:bold;'>" + title + "</div></td>";
-                    rows += "<td>" + project + "</td>";
-                    rows += "<td><span class='badge bg-" + priority + "'>" + priority + "</span></td>";
-                    rows += "<td><select class='status-select " + d.status + "' onchange='updateStatus(\"" + id + "\", this)'><option value='PENDING' " + sPending + ">PENDING</option><option value='IN_PROGRESS' " + sProg + ">IN PROGRESS</option><option value='DONE' " + sDone + ">DONE</option></select></td>";
-                    rows += "<td><button class='btn-open' onclick='openTask(\"" + id + "\", \"" + safeData + "\")'>Open & Reply</button></td>";
+                    rows += "<td><b style='color:var(--primary-navy);'>" + (d.title || "Untitled") + "</b></td>";
+                    rows += "<td>" + (d.project || "General") + "</td>";
+                    rows += "<td><span class='badge bg-" + (d.priority || "LOW") + "'>" + (d.priority || "LOW") + "</span></td>";
+                    rows += "<td>";
+                    rows += "<select class='status-select " + d.status + "' onchange='updateStatus(\"" + id + "\", this)'>";
+                    rows += "<option value='PENDING' " + sP + ">PENDING</option>";
+                    rows += "<option value='IN_PROGRESS' " + sI + ">IN PROGRESS</option>";
+                    rows += "<option value='DONE' " + sD + ">DONE</option>";
+                    rows += "</select>";
+                    rows += "</td>";
+                    rows += "<td><button class='btn-action' onclick='openTask(\"" + id + "\", \"" + safeData + "\")'>View & Reply</button></td>";
                     rows += "</tr>";
                 });
                 tbody.innerHTML = rows;
             });
         }
 
-        /* --- TAB 2: PROJECTS LOGIC --- */
+        window.updateStatus = function(docId, selectElement) {
+            const newStatus = selectElement.value;
+            selectElement.className = "status-select " + newStatus;
+            db.collection("tasks").doc(docId).update({ status: newStatus });
+        };
+
+        // --- 4. PROJECT CHAT LOGIC ---
         function loadEmployeeProjects(email) {
-            // Find projects where this employee is a member
             db.collection("projects").where("members", "array-contains", email).onSnapshot(snap => {
                 const select = document.getElementById("empProjectSelect");
                 select.innerHTML = '<option value="">-- Choose a Project --</option>';
@@ -324,47 +619,43 @@ const firebaseConfig = {
 
         function loadProjectChat() {
             const projId = document.getElementById("empProjectSelect").value;
-            const chatContainer = document.getElementById("projChatContainer");
-            const noProjectMsg = document.getElementById("noProjectMsg");
             const chatBox = document.getElementById("projectChatBox");
-            const infoBox = document.getElementById("projInfo");
-
+            const inputArea = document.getElementById("projInputArea");
+            
             if(!projId) {
-                chatContainer.style.display = "none";
-                noProjectMsg.style.display = "block";
-                infoBox.style.display = "none";
+                inputArea.style.display = "none";
+                chatBox.innerHTML = "<div style='text-align:center; color:#ccc; margin-top:50px;'>👈 Select a project to start chatting</div>";
+                document.getElementById("chatProjName").innerText = "Select a project...";
                 if(projChatListener) projChatListener();
                 return;
             }
 
-            // Setup UI
             currentProjectID = projId;
             const projName = document.getElementById("empProjectSelect").options[document.getElementById("empProjectSelect").selectedIndex].text;
-            document.getElementById("chatProjName").innerText = projName;
-            
-            chatContainer.style.display = "block";
-            noProjectMsg.style.display = "none";
-            infoBox.style.display = "block";
-            chatBox.innerHTML = "<div style='text-align:center; color:#999'>Loading history...</div>";
+            document.getElementById("chatProjName").innerText = "💬 " + projName;
+            inputArea.style.display = "flex";
 
-            // Listen to Messages
             if(projChatListener) projChatListener();
             
             projChatListener = db.collection("projects").doc(projId).collection("messages")
                 .orderBy("timestamp", "asc")
                 .onSnapshot(snap => {
                     chatBox.innerHTML = "";
+                    if(snap.empty) {
+                        chatBox.innerHTML = "<div style='text-align:center; color:#ccc; margin-top:40px;'>No messages yet. Say hello! 👋</div>";
+                    }
+                    
                     snap.forEach(doc => {
                         const m = doc.data();
-                        const isMine = m.sender === auth.currentUser.email;
-                        const mineClass = isMine ? "msg-mine" : "msg-other";
+                        const isMine = m.sender === currentUserEmail;
+                        const bubbleClass = isMine ? "msg-mine" : "msg-other";
                         
-                        // FIXED: String Concatenation to avoid JSP display error
-                        let bubble = "<div class='chat-msg " + mineClass + "'>";
-                        bubble += "<b>" + m.senderName + ":</b> " + m.text;
-                        bubble += "</div>";
+                        let html = "<div class='msg-bubble " + bubbleClass + "'>";
+                        if(!isMine) html += "<span class='msg-sender'>" + (m.senderName || "User") + "</span>";
+                        html += m.text;
+                        html += "</div>";
                         
-                        chatBox.innerHTML += bubble;
+                        chatBox.innerHTML += html;
                     });
                     chatBox.scrollTop = chatBox.scrollHeight;
                 });
@@ -377,50 +668,57 @@ const firebaseConfig = {
 
             db.collection("projects").doc(currentProjectID).collection("messages").add({
                 text: txt,
-                sender: auth.currentUser.email,
-                senderName: "Employee", // Can fetch real name if needed, but keeping simple
+                sender: currentUserEmail,
+                senderName: "Employee",
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             }).then(() => { input.value = ""; });
         }
 
-        /* --- MODAL LOGIC (Existing) --- */
+        // --- 5. MODAL LOGIC ---
         function openTask(id, encodedData) {
             currentTaskId = id;
             const d = JSON.parse(decodeURIComponent(encodedData));
+            
             document.getElementById("mTitle").innerText = d.title;
             document.getElementById("mDesc").innerText = d.description || "No description provided.";
-            document.getElementById("mDate").innerText = d.dueDate || "-";
-            document.getElementById("mProj").innerText = d.project;
+            document.getElementById("mDate").innerText = "Due: " + (d.dueDate || "-");
+            document.getElementById("mProj").innerText = "Project: " + (d.project || "General");
+            
             const photoBox = document.getElementById("mPhotoBox");
             if(d.photo) {
                 photoBox.style.display = "block";
                 document.getElementById("mPhotoLink").href = d.photo; 
             } else { photoBox.style.display = "none"; }
+            
             document.getElementById("taskModal").style.display = "flex";
-            loadChat(id);
+            loadTaskChat(id);
         }
 
-        function loadChat(taskId) {
+        function loadTaskChat(taskId) {
             const chatBox = document.getElementById("chatMessages");
-            chatBox.innerHTML = "<div style='text-align:center; color:#999; margin-top:10px;'>Loading conversation...</div>";
+            chatBox.innerHTML = "<div style='text-align:center; padding:30px; color:#999'>Loading updates...</div>";
+            
             if(chatListener) chatListener();
+            
             chatListener = db.collection("tasks").doc(taskId).collection("replies").orderBy("timestamp", "asc").onSnapshot(snap => {
                 chatBox.innerHTML = "";
-                if(snap.empty) chatBox.innerHTML = "<div style='text-align:center; color:#ccc; margin-top:20px;'>No replies yet.</div>";
+                if(snap.empty) {
+                    chatBox.innerHTML = "<div style='text-align:center; padding:30px; color:#ccc'>No discussions yet.</div>";
+                    return;
+                }
+                
                 snap.forEach(doc => {
                     const m = doc.data();
                     const isMine = m.email === currentUserEmail;
                     const bubbleClass = isMine ? "msg-mine" : "msg-other";
-                    const senderName = isMine ? "Me" : (m.role === 'admin' ? "Admin" : m.email);
-                    const time = m.timestamp ? new Date(m.timestamp.seconds * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : "";
+                    const sender = isMine ? "Me" : (m.role === 'admin' ? "Admin" : "Manager");
+
+                    let html = "<div class='msg-bubble " + bubbleClass + "'>";
+                    if(!isMine) html += "<span class='msg-sender'>" + sender + "</span>";
+                    html += m.message;
+                    html += "</div>";
                     
-                    // FIXED: String Concatenation here too
-                    let msgHtml = "<div class='msg-bubble " + bubbleClass + "'>";
-                    msgHtml += "<div>" + m.message + "</div>";
-                    msgHtml += "<span class='msg-meta'>" + senderName + " • " + time + "</span>";
-                    msgHtml += "</div>";
-                    
-                    chatBox.innerHTML += msgHtml;
+                    chatBox.innerHTML += html;
                 });
                 chatBox.scrollTop = chatBox.scrollHeight;
             });
@@ -430,6 +728,7 @@ const firebaseConfig = {
             const input = document.getElementById("chatInput");
             const msg = input.value.trim();
             if(!msg) return;
+            
             db.collection("tasks").doc(currentTaskId).collection("replies").add({
                 message: msg, email: currentUserEmail, role: 'employee',
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
@@ -441,15 +740,8 @@ const firebaseConfig = {
             if(chatListener) chatListener();
         }
 
-        window.updateStatus = function(docId, selectElement) {
-            const newStatus = selectElement.value;
-            selectElement.className = "status-select " + newStatus;
-            db.collection("tasks").doc(docId).update({ status: newStatus });
-        };
-
-        function logout() {
-            auth.signOut().then(() => window.location.href = "login.jsp");
-        }
+        function logout() { auth.signOut().then(() => window.location.href = "index.html"); }
+        function toggleSidebar() { document.getElementById("sidebar").classList.toggle("open"); }
     </script>
 </body>
 </html>

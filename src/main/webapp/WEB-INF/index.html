@@ -2,73 +2,373 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AKA Attendance App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synod Group - Secure Login</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #e9ecef;
+        /* --- 1. General Reset & Typography --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body, html { height: 100%; width: 100%; background-color: #f4f6f8; }
+
+        /* --- 2. Layout: Split Screen --- */
+        .container { display: flex; height: 100vh; width: 100%; }
+
+        /* --- 3. Left Side: Branding --- */
+        .left-panel {
+            flex: 1.2;
+            background-color: #e3e6e8;
             display: flex;
-            justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .container {
-            display: flex;
-            gap: 20px;
-        }
-        .card {
-            background: white;
+            justify-content: center;
             padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            text-align: center;
-            width: 250px;
-            transition: transform 0.2s;
+            border-right: 1px solid #d1d5db;
         }
-        .card:hover {
-            transform: translateY(-5px);
+        .left-panel img {
+            max-width: 90%;
+            max-height: 80%;
+            object-fit: contain;
+            filter: drop-shadow(0 15px 25px rgba(0,0,0,0.1));
         }
-        h2 { color: #333; margin-bottom: 20px; }
-        p { color: #666; margin-bottom: 30px; }
-        
-        .btn {
-            display: block;
+
+        /* --- 4. Right Side: Login Box --- */
+        .right-panel {
+            flex: 1;
+            background-color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            padding: 50px;
+        }
+
+        /* The Login Card Wrapper */
+        .login-wrapper {
             width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            cursor: pointer;
-            text-decoration: none;
-            box-sizing: border-box;
+            max-width: 480px; /* Wider for bigger fonts */
         }
-        
-        /* Button Colors */
-        .btn-admin { background-color: #343a40; color: white; }
-        .btn-user { background-color: #007bff; color: white; }
-        .btn-signup { background-color: #28a745; color: white; }
-        
-        .btn:hover { opacity: 0.9; }
+
+        .login-header { margin-bottom: 30px; text-align: center; }
+        .login-header h1 {
+            color: #1a3b6e;
+            font-size: 2.8rem; /* Bigger Font */
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+        .login-header p {
+            color: #666;
+            font-size: 1.2rem; /* Bigger Font */
+        }
+
+        /* --- 5. TABS DESIGN --- */
+        .tabs {
+            display: flex;
+            background: #f1f3f5;
+            padding: 5px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 1.1rem; /* Bigger Font */
+            font-weight: 700;
+            color: #7f8c8d;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            background-color: white;
+            color: #1a3b6e; /* Synod Blue */
+            box-shadow: 0 4px 6px rgba(0,0,0,0.08);
+        }
+
+        /* Admin Tab Specific Color when Active */
+        .tab-btn.active-admin {
+            color: #c0392b; /* Admin Red */
+        }
+
+        /* --- 6. FORM STYLING --- */
+        .form-group { margin-bottom: 25px; }
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            color: #444;
+            font-weight: 600;
+            font-size: 1rem; /* Bigger Font */
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 16px; /* Larger padding */
+            border: 2px solid #e1e4e8;
+            border-radius: 8px;
+            font-size: 1.1rem; /* Bigger Input Text */
+            transition: border-color 0.3s;
+            background: #fdfdfd;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #1a3b6e;
+            background: #fff;
+        }
+
+        /* Submit Button */
+        .btn-login {
+            width: 100%;
+            padding: 18px;
+            background-color: #1a3b6e;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2rem; /* Bigger Font */
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.3s;
+            margin-top: 10px;
+        }
+        .btn-login:hover {
+            background-color: #132c52;
+            transform: translateY(-2px);
+        }
+
+        /* Admin Button Color */
+        .btn-login.admin-mode {
+            background-color: #c0392b; /* Red for Admin */
+        }
+        .btn-login.admin-mode:hover { background-color: #a93226; }
+
+        /* Footer Links */
+        .footer-links {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 1rem;
+        }
+        .footer-links a {
+            color: #1a3b6e;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .footer-links a:hover { text-decoration: underline; }
+
+        /* Error Message */
+        .error-msg {
+            background-color: #fee2e2;
+            color: #991b1b;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            display: none;
+            text-align: center;
+            border: 1px solid #fecaca;
+        }
+
+        /* Loading Overlay */
+        #loadingOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.95);
+            z-index: 999;
+            display: none;
+            justify-content: center; align-items: center;
+            flex-direction: column;
+            color: #333; font-size: 1.5rem; font-weight: bold;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 900px) {
+            .container { flex-direction: column; height: auto; }
+            .left-panel { height: 35vh; padding: 20px; border-right: none; }
+            .right-panel { min-height: 65vh; padding: 40px 20px; }
+            .login-header h1 { font-size: 2.2rem; }
+        }
     </style>
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
+    <div id="loadingOverlay">
+        <div style="font-size: 50px; margin-bottom: 20px;">🔄</div>
+        <div>Verifying Credentials...</div>
+    </div>
+
     <div class="container">
-        <div class="card">
-            <h2>Admin Portal</h2>
-            <p>Manage attendance records and view reports.</p>
-            <a href="login.jsp" class="btn btn-admin">Admin Login</a>
+        <div class="left-panel">
+            <img src="synod_logo.png" alt="Synod Group Logo">
         </div>
 
-        <div class="card">
-            <h2>Employee Portal</h2>
-            <p>Mark your daily attendance and view history.</p>
-            <a href="login.jsp" class="btn btn-user">Employee Login</a>
-            <a href="signup.jsp" class="btn btn-signup">New User? Sign Up</a>
+        <div class="right-panel">
+            <div class="login-wrapper">
+                
+                <div class="login-header">
+                    <h1>Synod Bioscience</h1>
+                    <p>Corporate Portal Login</p>
+                </div>
+
+                <div class="tabs">
+                    <button class="tab-btn active" id="tab-employee" onclick="switchRole('employee')">Employee / Manager</button>
+                    <button class="tab-btn" id="tab-admin" onclick="switchRole('admin')">Admin</button>
+                </div>
+
+                <div id="errorBox" class="error-msg"></div>
+
+                <form onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label id="lbl-email">Employee Email</label>
+                        <input type="email" id="email" class="form-input" placeholder="name@synodbioscience.com" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="password" class="form-input" placeholder="••••••••" required>
+                    </div>
+
+                    <button type="submit" class="btn-login" id="loginBtn">Login as Employee</button>
+                </form>
+
+                <div class="footer-links">
+                    New User? <a href="signup.jsp">Register Here</a>
+                </div>
+            </div>
         </div>
     </div>
 
+    <script>
+        // --- 1. CONFIGURATION ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBzdM77WwTSkxvF0lsxf2WLNLhjuGyNvQQ",
+            authDomain: "attendancewebapp-ef02a.firebaseapp.com",
+            projectId: "attendancewebapp-ef02a",
+            storageBucket: "attendancewebapp-ef02a.firebasestorage.app",
+            messagingSenderId: "734213881030",
+            appId: "1:734213881030:web:bfdcee5a2ff293f87e6bc7"
+        };
+        
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Track selected role
+        let currentRole = 'employee';
+
+        // --- 2. TAB SWITCHING LOGIC ---
+        function switchRole(role) {
+            currentRole = role;
+            const empTab = document.getElementById('tab-employee');
+            const adminTab = document.getElementById('tab-admin');
+            const btn = document.getElementById('loginBtn');
+            const lblEmail = document.getElementById('lbl-email');
+
+            // Reset Styles
+            empTab.classList.remove('active');
+            adminTab.classList.remove('active', 'active-admin');
+            btn.classList.remove('admin-mode');
+
+            if (role === 'admin') {
+                adminTab.classList.add('active', 'active-admin');
+                btn.classList.add('admin-mode');
+                btn.innerText = "Login as Admin";
+                lblEmail.innerText = "Admin Email";
+            } else {
+                empTab.classList.add('active');
+                btn.innerText = "Login as Employee";
+                lblEmail.innerText = "Employee Email";
+            }
+        }
+
+        // --- 3. LOGIN LOGIC ---
+        async function handleLogin(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById("email").value;
+            const pass = document.getElementById("password").value;
+            const btn = document.getElementById("loginBtn");
+            const loader = document.getElementById("loadingOverlay");
+            const errBox = document.getElementById("errorBox");
+
+            errBox.style.display = "none";
+            btn.disabled = true;
+            btn.innerText = "Authenticating...";
+
+            try {
+                // A. Firebase Authentication
+                const userCredential = await auth.signInWithEmailAndPassword(email, pass);
+                
+                // B. Role Validation
+                loader.style.display = "flex"; // Show full screen loader
+                checkRoleAndRedirect(userCredential.user);
+
+            } catch (error) {
+                btn.disabled = false;
+                btn.innerText = currentRole === 'admin' ? "Login as Admin" : "Login as Employee";
+                loader.style.display = "none";
+                
+                let msg = "Login failed.";
+                if(error.code === 'auth/user-not-found') msg = "No account found.";
+                if(error.code === 'auth/wrong-password') msg = "Incorrect password.";
+                errBox.innerText = "⚠️ " + msg;
+                errBox.style.display = "block";
+            }
+        }
+
+        async function checkRoleAndRedirect(user) {
+            try {
+                const doc = await db.collection("users").doc(user.email).get();
+                
+                if (doc.exists) {
+                    const data = doc.data();
+
+                    // 1. Security Check
+                    if(data.status === 'Disabled') {
+                        throw new Error("Account Disabled");
+                    }
+
+                    // 2. Validate Selected Tab vs Actual Role
+                    // NOTE: 'admin' tab allows ONLY admins. 'employee' tab allows employees OR managers.
+                    if (currentRole === 'admin' && data.role !== 'admin') {
+                        throw new Error("Access Denied: You are not an Admin.");
+                    }
+
+                    // 3. Redirect Logic
+                    if (data.role === 'admin') {
+                        // Admin Dashboard
+                        window.location.replace("admin_homepage.html"); 
+                    } 
+                    else if (data.role === 'manager') {
+                        // Manager Dashboard
+                        window.location.replace("manager_dashboard.jsp"); 
+                    } 
+                    else {
+                        // Regular Employee Dashboard
+                        window.location.replace("employee_dashboard.jsp"); 
+                    }
+                } else {
+                    throw new Error("User record missing.");
+                }
+            } catch (e) {
+                console.error(e);
+                auth.signOut();
+                document.getElementById("loadingOverlay").style.display = "none";
+                document.getElementById("errorBox").innerText = "⚠️ " + e.message;
+                document.getElementById("errorBox").style.display = "block";
+                
+                const btn = document.getElementById("loginBtn");
+                btn.disabled = false;
+                btn.innerText = currentRole === 'admin' ? "Login as Admin" : "Login as Employee";
+            }
+        }
+    </script>
 </body>
 </html>
+
+
+
